@@ -1,0 +1,125 @@
+{
+  "projectType": "cli-tool",
+  "projectName": "webreel",
+  "projectDescription": "Record scripted browser demos as video with cursor animation, keystroke overlays, and sound effects.",
+  "theme": "palm",
+  "primaryColor": "#8B5CF6",
+  "lightColor": "#A78BFA",
+  "darkColor": "#7C3AED",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "installation", "quickstart"]
+          },
+          {
+            "group": "CLI Commands",
+            "pages": [
+              "commands/record",
+              "commands/preview",
+              "commands/init",
+              "commands/composite",
+              "commands/validate",
+              "commands/install"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "config/overview",
+              "config/video-options",
+              "config/actions",
+              "config/theme-customization"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/basic-recording",
+              "guides/cursor-and-overlays",
+              "guides/output-formats",
+              "guides/advanced-actions",
+              "guides/troubleshooting"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "examples/overview",
+              "examples/hello-world",
+              "examples/form-filling",
+              "examples/drag-and-drop",
+              "examples/keyboard-shortcuts",
+              "examples/page-scrolling",
+              "examples/custom-theme",
+              "examples/mobile-viewport",
+              "examples/screenshots",
+              "examples/gif-output",
+              "examples/webm-output"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Core Package",
+            "pages": [
+              "api/recorder",
+              "api/recording-context",
+              "api/actions",
+              "api/timeline",
+              "api/compositor"
+            ]
+          },
+          {
+            "group": "Chrome & Media",
+            "pages": [
+              "api/chrome",
+              "api/cdp",
+              "api/ffmpeg",
+              "api/overlays"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "CLI tool for recording scripted browser interactions as MP4, GIF, or WebM videos",
+    "JSON-based configuration with IDE autocompletion via JSON Schema",
+    "Automated Chrome and ffmpeg installation to user cache directory",
+    "Cursor animation and keystroke HUD overlays with customizable themes",
+    "Multiple action types: click, type, drag, scroll, key combos, navigation, and screenshots",
+    "Watch mode for config changes and re-compositing without re-recording",
+    "60fps screen capture with Chrome DevTools Protocol",
+    "Shared step files for reusable automation sequences"
+  ],
+  "publicApiSurface": [
+    "webreel record",
+    "webreel preview",
+    "webreel init",
+    "webreel composite",
+    "webreel validate",
+    "webreel install",
+    "RecordingContext",
+    "Recorder",
+    "InteractionTimeline",
+    "compose()",
+    "launchChrome()",
+    "ensureChrome()",
+    "ensureFfmpeg()",
+    "injectOverlays()",
+    "pause()",
+    "navigate()",
+    "clickAt()",
+    "pressKey()",
+    "typeText()",
+    "dragFromTo()",
+    "captureScreenshot()"
+  ]
+}
