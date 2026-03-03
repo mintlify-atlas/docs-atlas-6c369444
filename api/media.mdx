@@ -1,0 +1,235 @@
+---
+title: Media utilities
+description: Thumbnail extraction and media processing utilities
+---
+
+## extractThumbnail()
+
+Extract a single frame from a video as a PNG thumbnail.
+
+```typescript
+function extractThumbnail(
+  ffmpegPath: string,
+  videoPath: string,
+  outputPath: string,
+  timeSec: number
+): void
+```
+
+### Parameters
+
+<ParamField path="ffmpegPath" type="string" required>
+  Path to the ffmpeg binary. Obtain via `ensureFfmpeg()`.
+</ParamField>
+
+<ParamField path="videoPath" type="string" required>
+  Path to the input video file (MP4, WebM, etc.).
+</ParamField>
+
+<ParamField path="outputPath" type="string" required>
+  Path where the PNG thumbnail should be saved.
+</ParamField>
+
+<ParamField path="timeSec" type="number" required>
+  Time position in seconds from which to extract the frame.
+</ParamField>
+
+### Usage
+
+```typescript
+import { extractThumbnail, ensureFfmpeg } from '@webreel/core';
+
+const ffmpegPath = await ensureFfmpeg();
+
+extractThumbnail(
+  ffmpegPath,
+  'output.mp4',
+  'thumbnail.png',
+  0.5  // Extract frame at 0.5 seconds
+);
+```
+
+### Notes
+
+- Extracts exactly one frame at the specified time position
+- Output is always PNG format
+- The video file must exist and be readable
+- Used internally by webreel CLI for automatic thumbnail generation
+
+## SfxConfig
+
+Type definition for sound effect configuration.
+
+```typescript
+interface SfxConfig {
+  click?: 1 | 2 | 3 | 4 | string;
+  key?: 1 | 2 | 3 | 4 | string;
+}
+```
+
+### Fields
+
+<ParamField path="click" type="1 | 2 | 3 | 4 | string" optional>
+  Click sound preset number (1-4) or path to custom MP3 file.
+  
+  Default: `1`
+</ParamField>
+
+<ParamField path="key" type="1 | 2 | 3 | 4 | string" optional>
+  Keystroke sound preset number (1-4) or path to custom MP3 file.
+  
+  Default: `1`
+</ParamField>
+
+### Usage
+
+Use preset sounds:
+
+```typescript
+const sfx: SfxConfig = {
+  click: 2,
+  key: 3
+};
+```
+
+Use custom sound files:
+
+```typescript
+const sfx: SfxConfig = {
+  click: './sounds/my-click.mp3',
+  key: './sounds/my-key.mp3'
+};
+```
+
+### Preset Sounds
+
+webreel includes 4 built-in sound presets for both clicks and keystrokes:
+
+- **1**: Soft, subtle click/key sound (default)
+- **2**: Mechanical keyboard-style sound
+- **3**: Pronounced, sharp sound
+- **4**: Deep, bass-heavy sound
+
+Custom MP3 files must be valid audio files readable by ffmpeg.
+
+## Constants
+
+Export constants from `@webreel/core`:
+
+### TARGET_FPS
+
+```typescript
+const TARGET_FPS: number = 60
+```
+
+Target frame rate for video capture (60 frames per second).
+
+### FRAME_MS
+
+```typescript
+const FRAME_MS: number = 16.666...
+```
+
+Milliseconds per frame at TARGET_FPS (1000 / 60).
+
+### DEFAULT_VIEWPORT_SIZE
+
+```typescript
+const DEFAULT_VIEWPORT_SIZE: number = 1080
+```
+
+Default viewport width and height in pixels.
+
+### DEFAULT_CURSOR_SIZE
+
+```typescript
+const DEFAULT_CURSOR_SIZE: number = 24
+```
+
+Default cursor width and height in pixels.
+
+### OFFSCREEN_MARGIN
+
+```typescript
+const OFFSCREEN_MARGIN: number = 40
+```
+
+Margin in pixels for offscreen cursor rendering.
+
+### CAPTURE_CYCLE_MS
+
+```typescript
+const CAPTURE_CYCLE_MS: number = 35
+```
+
+Interval in milliseconds between CDP screenshot captures during recording.
+
+### DEFAULT_CURSOR_SVG
+
+```typescript
+const DEFAULT_CURSOR_SVG: string
+```
+
+Default cursor SVG markup as a string. A white arrow with black stroke.
+
+### DEFAULT_HUD_THEME
+
+```typescript
+const DEFAULT_HUD_THEME: {
+  background: string;
+  color: string;
+  fontSize: number;
+  fontFamily: string;
+  borderRadius: number;
+  position: "bottom";
+}
+```
+
+Default theme configuration for the keystroke HUD overlay:
+
+```typescript
+{
+  background: "rgba(0,0,0,0.5)",
+  color: "rgba(255,255,255,0.85)",
+  fontSize: 56,
+  fontFamily: '"Geist", -apple-system, BlinkMacSystemFont, sans-serif',
+  borderRadius: 18,
+  position: "bottom"
+}
+```
+
+### Usage
+
+```typescript
+import {
+  TARGET_FPS,
+  FRAME_MS,
+  DEFAULT_VIEWPORT_SIZE,
+  DEFAULT_CURSOR_SIZE,
+  DEFAULT_CURSOR_SVG,
+  DEFAULT_HUD_THEME
+} from '@webreel/core';
+
+console.log(`Recording at ${TARGET_FPS}fps (${FRAME_MS}ms per frame)`);
+console.log(`Default viewport: ${DEFAULT_VIEWPORT_SIZE}x${DEFAULT_VIEWPORT_SIZE}`);
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Compositor" icon="video" href="/api/compositor">
+    Video composition with sound effects
+  </Card>
+  
+  <Card title="FFmpeg" icon="film" href="/api/ffmpeg">
+    FFmpeg installation and management
+  </Card>
+  
+  <Card title="Recorder" icon="circle-dot" href="/api/recorder">
+    Recording engine with thumbnail support
+  </Card>
+  
+  <Card title="Overlays" icon="layer-group" href="/api/overlays">
+    Cursor and HUD theme constants
+  </Card>
+</CardGroup>

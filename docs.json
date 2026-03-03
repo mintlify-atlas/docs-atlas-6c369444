@@ -94,7 +94,8 @@
               "api/chrome",
               "api/cdp",
               "api/ffmpeg",
-              "api/overlays"
+              "api/overlays",
+              "api/media"
             ]
           }
         ]
