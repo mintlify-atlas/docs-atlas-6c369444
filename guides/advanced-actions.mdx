@@ -1,0 +1,677 @@
+---
+title: Advanced Actions
+description: Drag-and-drop, scrolling, modifier clicks, and complex multi-step interactions
+---
+
+Beyond basic clicks and typing, webreel supports complex interactions including drag-and-drop, scrolling, modifier keys, and multi-step workflows.
+
+## Drag-and-Drop
+
+The `drag` action simulates dragging elements from one position to another, perfect for kanban boards, file managers, and reorderable lists.
+
+### Basic Drag
+
+Drag an element by text or selector:
+
+```json
+{
+  "action": "drag",
+  "from": { "text": "Task Item" },
+  "to": { "selector": ".drop-zone" }
+}
+```
+
+Both `from` and `to` support:
+
+- `text`: Find element by visible text content
+- `selector`: Find element by CSS selector
+- `within`: Scope the search to a container
+
+### Scoped Drag
+
+When multiple elements have the same text, use `within` to narrow the search:
+
+```json
+{
+  "action": "drag",
+  "from": {
+    "text": "Write unit tests",
+    "within": ".column-todo"
+  },
+  "to": {
+    "selector": ".card-list",
+    "within": ".column-in-progress"
+  }
+}
+```
+
+From the drag-and-drop example:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "drag-and-drop": {
+      "url": "./web/index.html",
+      "viewport": { "width": 1920, "height": 1080 },
+      "zoom": 2,
+      "waitFor": ".board",
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "moveTo", "text": "Write unit tests", "delay": 400 },
+        {
+          "action": "drag",
+          "from": { "text": "Write unit tests", "within": ".column-todo" },
+          "to": { "selector": ".card-list", "within": ".column-in-progress" },
+          "delay": 600
+        },
+        {
+          "action": "drag",
+          "from": { "text": "Build API endpoints", "within": ".column-in-progress" },
+          "to": { "selector": ".card-list", "within": ".column-done" },
+          "delay": 1000
+        }
+      ]
+    }
+  }
+}
+```
+
+### Drag Physics
+
+Drag operations use realistic motion:
+
+- **Bezier curves**: The path arcs naturally, not straight lines
+- **Variable speed**: Faster in the middle, slower at start/end
+- **Distance-based timing**: Longer drags take proportionally more time
+
+From the source (packages/@webreel/core/src/cursor-motion.ts:176):
+
+```typescript
+export function computeDragTiming(distance: number): {
+  steps: number;
+  delayMs: number;
+} {
+  const duration = 300 + 20 * Math.sqrt(distance) + (Math.random() - 0.5) * 40;
+  const steps = Math.max(12, Math.round(duration / 30));
+  return { steps, delayMs: duration / steps };
+}
+```
+
+### Visual Feedback
+
+During drag:
+
+1. Cursor scales down to 0.75x (pressing)
+2. Ghost element created showing dragged item
+3. DragEvent sequence fires (dragstart, dragover, drop, dragend)
+4. Ghost fades out on drop
+5. Cursor scales back to 1x
+
+From the implementation (packages/@webreel/core/src/actions.ts:697):
+
+```typescript
+const ghost = src.cloneNode(true);
+ghost.id = "__demo-drag-ghost";
+ghost.style.cssText = [
+  "position:fixed",
+  "z-index:999998",
+  "pointer-events:none",
+  "opacity:0.85",
+  "transform:rotate(2deg) scale(1.03)",
+  "box-shadow:0 12px 32px rgba(0,0,0,0.4)",
+].join(";");
+```
+
+### Preview Before Drag
+
+Use `moveTo` to hover before dragging:
+
+```json
+[
+  { "action": "moveTo", "text": "Item to drag", "delay": 400 },
+  {
+    "action": "drag",
+    "from": { "text": "Item to drag" },
+    "to": { "selector": ".target" }
+  }
+]
+```
+
+This lets viewers see what you're about to drag.
+
+## Scrolling
+
+Webreel supports both page scrolling and element-specific scrolling.
+
+### Page Scrolling
+
+Scroll the entire page:
+
+```json
+{ "action": "scroll", "y": 400 }
+```
+
+Scroll horizontally:
+
+```json
+{ "action": "scroll", "x": 200 }
+```
+
+Scroll both axes:
+
+```json
+{ "action": "scroll", "x": 100, "y": 300 }
+```
+
+### Scroll Up
+
+Use negative values to scroll back up:
+
+```json
+{ "action": "scroll", "y": -300 }
+```
+
+From the page-scrolling example:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "page-scrolling": {
+      "url": "./web/index.html",
+      "viewport": { "width": 1920, "height": 1080 },
+      "zoom": 2,
+      "waitFor": "main",
+      "defaultDelay": 600,
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "scroll", "y": 400 },
+        { "action": "scroll", "y": 400 },
+        { "action": "scroll", "y": -300 },
+        { "action": "scroll", "y": 200, "selector": ".sidebar", "delay": 1000 }
+      ]
+    }
+  }
+}
+```
+
+### Element Scrolling
+
+Scroll within a specific element (like a sidebar or modal):
+
+```json
+{
+  "action": "scroll",
+  "y": 200,
+  "selector": ".sidebar"
+}
+```
+
+Scroll within a scoped container:
+
+```json
+{
+  "action": "scroll",
+  "y": 150,
+  "selector": ".content",
+  "within": ".modal"
+}
+```
+
+### Scroll to Element
+
+Scroll an element containing specific text:
+
+```json
+{
+  "action": "scroll",
+  "text": "Section Title",
+  "y": 100
+}
+```
+
+This finds the element containing "Section Title" and scrolls it.
+
+### Smooth Scrolling
+
+All scroll actions use `behavior: "smooth"` for natural motion:
+
+```javascript
+window.scrollBy({ left: scrollX, top: scrollY, behavior: "smooth" });
+```
+
+The 500ms default delay after scroll actions allows time for the smooth scroll animation to complete.
+
+## Modifier Clicks
+
+Click while holding modifier keys (Cmd, Ctrl, Shift, Alt) for multi-select, context menus, and special actions.
+
+### Basic Modifier Click
+
+```json
+{
+  "action": "click",
+  "text": "File.pdf",
+  "modifiers": ["cmd"]
+}
+```
+
+### Multiple Modifiers
+
+Combine multiple modifiers:
+
+```json
+{
+  "action": "click",
+  "selector": ".item",
+  "modifiers": ["cmd", "shift"]
+}
+```
+
+### Available Modifiers
+
+<table>
+  <thead>
+    <tr>
+      <th>Modifier</th>
+      <th>Aliases</th>
+      <th>Common Use</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>`cmd`</td>
+      <td>`meta`</td>
+      <td>Multi-select on macOS</td>
+    </tr>
+    <tr>
+      <td>`ctrl`</td>
+      <td>`control`</td>
+      <td>Multi-select on Windows/Linux, context menu</td>
+    </tr>
+    <tr>
+      <td>`shift`</td>
+      <td>-</td>
+      <td>Range selection</td>
+    </tr>
+    <tr>
+      <td>`alt`</td>
+      <td>-</td>
+      <td>Alternative actions</td>
+    </tr>
+    <tr>
+      <td>`mod`</td>
+      <td>-</td>
+      <td>Auto-resolves to `cmd` on macOS, `ctrl` elsewhere</td>
+    </tr>
+  </tbody>
+</table>
+
+### Platform-Aware Modifier
+
+Use `mod` to automatically use the correct modifier for the platform:
+
+```json
+{
+  "action": "click",
+  "text": "Item",
+  "modifiers": ["mod"]
+}
+```
+
+This becomes `cmd` on macOS and `ctrl` on Windows/Linux.
+
+### Multi-Select Example
+
+From the modifier-clicks example:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "modifier-clicks": {
+      "url": "./web/index.html",
+      "viewport": { "width": 1920, "height": 1080 },
+      "zoom": 2,
+      "waitFor": ".file-list",
+      "defaultDelay": 400,
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "click", "text": "document.pdf", "modifiers": ["cmd"] },
+        { "action": "click", "text": "notes.txt", "modifiers": ["cmd"] },
+        {
+          "action": "click",
+          "text": "archive.zip",
+          "within": ".file-list",
+          "modifiers": ["cmd"],
+          "delay": 800
+        },
+        { "action": "key", "key": "Backspace", "delay": 500 },
+        { "action": "pause", "ms": 1500 }
+      ]
+    }
+  }
+}
+```
+
+This demonstrates:
+
+1. Cmd-click to select first file
+2. Cmd-click to add second file to selection
+3. Cmd-click to add third file
+4. Press Backspace to delete all selected files
+
+### HUD Display for Modifiers
+
+When you click with modifiers, the keystroke HUD automatically appears showing the modifier keys:
+
+- `cmd` → ⌘ (macOS) or Cmd
+- `ctrl` → Ctrl
+- `shift` → ⇧
+- `alt` → ⌥
+
+## Keyboard Shortcuts
+
+Press complex keyboard shortcuts with the `key` action.
+
+### Basic Shortcut
+
+```json
+{ "action": "key", "key": "cmd+s" }
+```
+
+### Multiple Modifiers
+
+```json
+{ "action": "key", "key": "cmd+shift+z" }
+```
+
+### Special Keys
+
+```json
+{ "action": "key", "key": "Enter" }
+{ "action": "key", "key": "Escape" }
+{ "action": "key", "key": "Tab" }
+{ "action": "key", "key": "Backspace" }
+{ "action": "key", "key": "Delete" }
+{ "action": "key", "key": "ArrowUp" }
+{ "action": "key", "key": "ArrowDown" }
+```
+
+### Custom Label
+
+Override the HUD display text:
+
+```json
+{
+  "action": "key",
+  "key": "cmd+k",
+  "label": "Quick Actions"
+}
+```
+
+The HUD shows "⌘ Quick Actions" instead of "⌘ K".
+
+### Keyboard Shortcuts Example
+
+From the keyboard-shortcuts example:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "keyboard-shortcuts": {
+      "url": "./web/index.html",
+      "viewport": { "width": 1920, "height": 1080 },
+      "zoom": 2,
+      "waitFor": ".editor",
+      "defaultDelay": 600,
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "click", "selector": ".editor" },
+        { "action": "key", "key": "cmd+a" },
+        { "action": "key", "key": "cmd+b", "delay": 800 },
+        { "action": "click", "selector": ".editor p:first-of-type" },
+        { "action": "key", "key": "cmd+s", "delay": 1200 },
+        { "action": "key", "key": "cmd+k", "delay": 1000 },
+        { "action": "key", "key": "Escape", "delay": 800 },
+        { "action": "pause", "ms": 500 }
+      ]
+    }
+  }
+}
+```
+
+Demonstrates:
+
+- Select All (Cmd+A)
+- Bold (Cmd+B)
+- Save (Cmd+S)
+- Command Palette (Cmd+K)
+- Cancel (Escape)
+
+## Multi-Step Interaction Patterns
+
+### Form Filling Flow
+
+Complete multi-step form:
+
+```json
+[
+  { "action": "pause", "ms": 500 },
+  {
+    "action": "type",
+    "text": "user@example.com",
+    "selector": "#email",
+    "charDelay": 40
+  },
+  {
+    "action": "type",
+    "text": "supersecret123",
+    "selector": "#password",
+    "charDelay": 30,
+    "delay": 500
+  },
+  { "action": "click", "text": "Sign In" },
+  { "action": "pause", "ms": 2500 }
+]
+```
+
+From the form-filling example:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "form-filling": {
+      "url": "./web/index.html",
+      "viewport": { "width": 1920, "height": 1080 },
+      "zoom": 2,
+      "waitFor": "#email",
+      "defaultDelay": 300,
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        {
+          "action": "type",
+          "text": "user@example.com",
+          "selector": "#email",
+          "charDelay": 40
+        },
+        {
+          "action": "type",
+          "text": "supersecret123",
+          "selector": "#password",
+          "charDelay": 30,
+          "delay": 500
+        },
+        { "action": "click", "text": "Sign In" },
+        { "action": "pause", "ms": 2500 }
+      ]
+    }
+  }
+}
+```
+
+### Navigate and Interact
+
+```json
+[
+  { "action": "pause", "ms": 500 },
+  { "action": "click", "selector": "#menu" },
+  { "action": "wait", "selector": ".dropdown" },
+  { "action": "click", "text": "Settings" },
+  { "action": "wait", "text": "Preferences" },
+  { "action": "scroll", "y": 200 },
+  { "action": "click", "text": "Save Changes", "delay": 1000 }
+]
+```
+
+### Hover, Then Act
+
+```json
+[
+  { "action": "hover", "selector": ".tooltip-trigger", "delay": 800 },
+  { "action": "click", "selector": ".action-button" }
+]
+```
+
+### Conditional Waiting
+
+Wait for elements to appear before interacting:
+
+```json
+[
+  { "action": "click", "text": "Load More" },
+  { "action": "wait", "selector": ".new-content", "timeout": 5000 },
+  { "action": "click", "text": "First New Item" }
+]
+```
+
+## Advanced Timing Control
+
+### Per-Step Delay
+
+Override default delay for specific steps:
+
+```json
+{
+  "defaultDelay": 400,
+  "steps": [
+    { "action": "click", "text": "Quick" },
+    { "action": "click", "text": "Slow", "delay": 2000 },
+    { "action": "click", "text": "Quick Again" }
+  ]
+}
+```
+
+The second click waits 2000ms instead of the default 400ms.
+
+### Character Delay in Typing
+
+Control typing speed:
+
+```json
+{
+  "action": "type",
+  "text": "Hello World",
+  "selector": "input",
+  "charDelay": 80
+}
+```
+
+- Lower values: Faster typing (feels robotic)
+- Higher values: Slower typing (more deliberate)
+- Default: 120ms with random variation
+
+### Click Dwell Time
+
+Control pause before clicking:
+
+```json
+{
+  "videos": {
+    "quick-demo": {
+      "url": "https://example.com",
+      "clickDwell": 50,
+      "steps": []
+    }
+  }
+}
+```
+
+Default is 80-180ms (randomized). Lower values make clicking feel snappier.
+
+## Move Without Clicking
+
+Use `moveTo` to preview hover states:
+
+```json
+[
+  { "action": "moveTo", "selector": ".item-1", "delay": 400 },
+  { "action": "moveTo", "selector": ".item-2", "delay": 400 },
+  { "action": "click", "selector": ".item-2" }
+]
+```
+
+This moves the cursor between items (showing hover effects) before clicking.
+
+## Select Dropdown Values
+
+Change dropdown selection:
+
+```json
+{
+  "action": "select",
+  "selector": "#country",
+  "value": "US"
+}
+```
+
+This sets the `<select>` element's value and fires change events.
+
+## Navigate Mid-Recording
+
+Change pages during a recording:
+
+```json
+[
+  { "action": "pause", "ms": 500 },
+  { "action": "click", "text": "Dashboard" },
+  { "action": "pause", "ms": 1000 },
+  { "action": "navigate", "url": "/settings" },
+  { "action": "wait", "selector": ".settings-page" },
+  { "action": "click", "text": "Update Profile" }
+]
+```
+
+The `navigate` action loads a new URL mid-video.
+
+## Capture Screenshots
+
+Take PNG screenshots at specific points:
+
+```json
+[
+  { "action": "pause", "ms": 500 },
+  { "action": "screenshot", "output": "screenshots/step-1.png" },
+  { "action": "click", "text": "Next" },
+  { "action": "screenshot", "output": "screenshots/step-2.png" }
+]
+```
+
+Screenshots are saved alongside the video.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Troubleshooting" icon="wrench" href="/guides/troubleshooting">
+    Common issues and solutions
+  </Card>
+  <Card title="Actions Reference" icon="list" href="/api/actions">
+    Complete action API reference
+  </Card>
+  <Card title="Examples" icon="code" href="/examples/overview">
+    Browse all example recordings
+  </Card>
+</CardGroup>

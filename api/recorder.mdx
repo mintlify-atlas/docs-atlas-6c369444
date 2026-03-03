@@ -1,0 +1,220 @@
+---
+title: 'Recorder'
+description: 'Record browser interactions and capture video frames'
+---
+
+The `Recorder` class handles video capture from a Chrome DevTools Protocol (CDP) client. It manages frame capture, encoding, and output generation.
+
+## Constructor
+
+```typescript
+new Recorder(
+  outputWidth?: number,
+  outputHeight?: number,
+  options?: {
+    sfx?: SfxConfig;
+    fps?: number;
+    crf?: number;
+    framesDir?: string;
+  }
+)
+```
+
+<ParamField path="outputWidth" type="number" default="1080">
+  Width of the output video in pixels
+</ParamField>
+
+<ParamField path="outputHeight" type="number" default="1080">
+  Height of the output video in pixels
+</ParamField>
+
+<ParamField path="options.sfx" type="SfxConfig">
+  Sound effects configuration for click and key events
+  
+  ```typescript
+  interface SfxConfig {
+    click?: 1 | 2 | 3 | 4 | string; // Built-in sound or custom path
+    key?: 1 | 2 | 3 | 4 | string;
+  }
+  ```
+</ParamField>
+
+<ParamField path="options.fps" type="number" default="60">
+  Target frames per second for recording
+</ParamField>
+
+<ParamField path="options.crf" type="number" default="18">
+  Constant Rate Factor for video encoding quality (0-51, lower is better)
+</ParamField>
+
+<ParamField path="options.framesDir" type="string">
+  Optional directory to save individual frame images during recording
+</ParamField>
+
+## Methods
+
+### start()
+
+Begin recording from a CDP client.
+
+```typescript
+await recorder.start(client, outputPath, ctx?)
+```
+
+<ParamField path="client" type="CDPClient" required>
+  Chrome DevTools Protocol client instance
+</ParamField>
+
+<ParamField path="outputPath" type="string" required>
+  Path where the video will be saved (.mp4, .webm, or .gif)
+</ParamField>
+
+<ParamField path="ctx" type="RecordingContext">
+  Optional recording context for tracking cursor and interactions
+</ParamField>
+
+### stop()
+
+Stop recording and finalize the output video.
+
+```typescript
+await recorder.stop()
+```
+
+This method:
+- Stops frame capture
+- Closes the ffmpeg encoding process
+- Applies sound effects if configured
+- Finalizes the output file in the requested format
+- Cleans up temporary files
+
+### setTimeline()
+
+Attach an interaction timeline to the recorder.
+
+```typescript
+recorder.setTimeline(timeline)
+```
+
+<ParamField path="timeline" type="InteractionTimeline" required>
+  Timeline instance to track cursor movements and events
+</ParamField>
+
+### getTimeline()
+
+Retrieve the currently attached timeline.
+
+```typescript
+const timeline = recorder.getTimeline()
+```
+
+<ResponseField name="timeline" type="InteractionTimeline | null">
+  The attached timeline, or null if none is set
+</ResponseField>
+
+### getTimelineData()
+
+Get the timeline data as a serializable JSON object.
+
+```typescript
+const data = recorder.getTimelineData()
+```
+
+<ResponseField name="data" type="TimelineData | null">
+  Timeline data including frames, events, and theme configuration
+</ResponseField>
+
+### addEvent()
+
+Manually add a sound event to the recording.
+
+```typescript
+recorder.addEvent(type)
+```
+
+<ParamField path="type" type="'click' | 'key'" required>
+  Type of interaction event
+</ParamField>
+
+### getTempVideoPath()
+
+Get the path to the temporary video file being created.
+
+```typescript
+const path = recorder.getTempVideoPath()
+```
+
+<ResponseField name="path" type="string">
+  Absolute path to the temporary video file
+</ResponseField>
+
+## Usage Example
+
+```typescript
+import { Recorder, connectCDP } from '@webreel/core';
+
+// Connect to Chrome
+const client = await connectCDP('http://localhost:9222');
+
+// Create recorder
+const recorder = new Recorder(1920, 1080, {
+  fps: 60,
+  sfx: {
+    click: 1,
+    key: 2
+  }
+});
+
+// Start recording
+await recorder.start(client, './output.mp4');
+
+// ... perform browser interactions ...
+
+// Stop and save
+await recorder.stop();
+await client.close();
+```
+
+## Advanced: Timeline-Based Recording
+
+For precise control over cursor animations and overlays, use a timeline:
+
+```typescript
+import { Recorder, InteractionTimeline, RecordingContext } from '@webreel/core';
+
+const timeline = new InteractionTimeline(1920, 1080, {
+  fps: 60,
+  cursorSvg: customCursorSvg,
+  hud: {
+    background: 'rgba(0,0,0,0.7)',
+    fontSize: 48
+  }
+});
+
+const ctx = new RecordingContext();
+ctx.setTimeline(timeline);
+ctx.setMode('record');
+
+const recorder = new Recorder(1920, 1080);
+recorder.setTimeline(timeline);
+
+await recorder.start(client, './temp.mp4', ctx);
+
+// The recorder will capture clean video without overlays
+// Timeline stores cursor/HUD data separately
+
+await recorder.stop();
+
+// Save timeline for later compositing
+timeline.save('./timeline.json');
+```
+
+## Output Formats
+
+The recorder supports multiple output formats based on file extension:
+
+- `.mp4` - H.264 video with optional audio (recommended)
+- `.webm` - VP9 video with optional audio
+- `.gif` - Animated GIF (no audio)
+
+Audio is automatically added when `sfx` is configured and interaction events are recorded.

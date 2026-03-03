@@ -1,0 +1,447 @@
+---
+title: Cursor and Overlay Customization
+description: Customize cursor animation, keystroke HUD appearance, and overlay themes
+---
+
+Webreel automatically overlays an animated cursor and keystroke HUD on your recordings. This guide shows you how to customize their appearance.
+
+## Default Behavior
+
+By default, webreel provides:
+
+- **Animated cursor**: A white cursor with black outline that moves smoothly using bezier curves and realistic easing
+- **Keystroke HUD**: A semi-transparent overlay showing keyboard shortcuts when you use the `key` action or modifier clicks
+- **Cursor sizing**: The cursor scales down slightly when clicking (0.75x) to provide visual feedback
+
+## Cursor Animation
+
+### Movement Physics
+
+Cursor movement is based on Fitts's law, creating realistic motion:
+
+- **Distance-based duration**: Longer distances take more time
+- **Bezier curve paths**: Slight arc to movement, not straight lines
+- **Micro-jitter**: Subtle randomness mimics human hand movement
+- **Asymmetric easing**: Quick acceleration, gentle deceleration
+
+From the source code (packages/@webreel/core/src/cursor-motion.ts:11):
+
+```typescript
+function moveDuration(distance: number): number {
+  return 180 + 16 * Math.sqrt(distance) + (Math.random() - 0.5) * 30;
+}
+```
+
+### Cursor Start Position
+
+The cursor starts at a random position just outside the viewport edge, creating a natural entry effect. You can control this behavior in the RecordingContext (packages/@webreel/core/src/actions.ts:60):
+
+```typescript
+resetCursorPosition(cssWidth?: number, cssHeight?: number): void {
+  const edge = Math.floor(Math.random() * 4);
+  const along = 0.2 + Math.random() * 0.6;
+  // Places cursor at random edge (top/right/bottom/left)
+}
+```
+
+## Keystroke HUD
+
+### When the HUD Appears
+
+The keystroke HUD automatically displays when:
+
+1. You use a `key` action with modifier keys:
+
+```json
+{ "action": "key", "key": "cmd+s" }
+```
+
+2. You click with modifiers:
+
+```json
+{ "action": "click", "text": "File.pdf", "modifiers": ["cmd"] }
+```
+
+### HUD Display Format
+
+Modifier keys are shown with platform-appropriate symbols:
+
+- `cmd` → ⌘ (on macOS) or Cmd (on Windows/Linux)
+- `ctrl` → Ctrl
+- `shift` → ⇧
+- `alt` → ⌥
+
+The `mod` keyword automatically resolves to `cmd` on macOS and `ctrl` elsewhere.
+
+### HUD Position
+
+By default, the HUD appears at the bottom center of the viewport. You can move it to the top:
+
+```json
+{
+  "theme": {
+    "hud": {
+      "position": "top"
+    }
+  }
+}
+```
+
+## Theme Customization
+
+### Complete Theme Structure
+
+You can customize both the cursor and HUD at the top level (affecting all videos) or per-video:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "theme": {
+    "cursor": {
+      "image": "./cursor.svg",
+      "size": 32,
+      "hotspot": "center"
+    },
+    "hud": {
+      "background": "rgba(30, 41, 59, 0.85)",
+      "color": "#e2e8f0",
+      "fontSize": 48,
+      "fontFamily": "\"SF Mono\", \"Fira Code\", monospace",
+      "borderRadius": 12,
+      "position": "top"
+    }
+  },
+  "videos": {
+    "my-demo": {
+      "url": "https://example.com",
+      "steps": []
+    }
+  }
+}
+```
+
+### Cursor Options
+
+<table>
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>`image`</td>
+      <td>string</td>
+      <td>Built-in SVG</td>
+      <td>Path to a custom SVG file relative to config directory</td>
+    </tr>
+    <tr>
+      <td>`size`</td>
+      <td>number</td>
+      <td>24</td>
+      <td>Cursor size in pixels</td>
+    </tr>
+    <tr>
+      <td>`hotspot`</td>
+      <td>`"top-left"` | `"center"`</td>
+      <td>`"top-left"`</td>
+      <td>Click position relative to cursor bounds</td>
+    </tr>
+  </tbody>
+</table>
+
+### HUD Options
+
+<table>
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>`background`</td>
+      <td>string</td>
+      <td>`"rgba(0,0,0,0.5)"`</td>
+      <td>CSS background color</td>
+    </tr>
+    <tr>
+      <td>`color`</td>
+      <td>string</td>
+      <td>`"rgba(255,255,255,0.85)"`</td>
+      <td>Text color</td>
+    </tr>
+    <tr>
+      <td>`fontSize`</td>
+      <td>number</td>
+      <td>56</td>
+      <td>Font size in pixels</td>
+    </tr>
+    <tr>
+      <td>`fontFamily`</td>
+      <td>string</td>
+      <td>`"Geist", -apple-system, BlinkMacSystemFont, sans-serif`</td>
+      <td>CSS font family</td>
+    </tr>
+    <tr>
+      <td>`borderRadius`</td>
+      <td>number</td>
+      <td>18</td>
+      <td>Border radius in pixels</td>
+    </tr>
+    <tr>
+      <td>`position`</td>
+      <td>`"top"` | `"bottom"`</td>
+      <td>`"bottom"`</td>
+      <td>Vertical position of HUD</td>
+    </tr>
+  </tbody>
+</table>
+
+## Custom Cursor SVG
+
+### Creating Your Cursor
+
+Create a custom cursor as an SVG file:
+
+```svg
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <path d="M5 3v24l7-7h10L5 3z" fill="#3b82f6" stroke="#1e40af" stroke-width="2"/>
+</svg>
+```
+
+Save it as `cursor.svg` next to your `webreel.config.json`.
+
+### Using the Custom Cursor
+
+Reference it in your theme:
+
+```json
+{
+  "theme": {
+    "cursor": {
+      "image": "./cursor.svg",
+      "size": 32
+    }
+  }
+}
+```
+
+### Hotspot Setting
+
+The `hotspot` determines where clicks occur relative to the cursor bounds:
+
+- `"top-left"`: Click at the cursor's top-left corner (default, appropriate for traditional arrow cursors)
+- `"center"`: Click at the cursor's center (appropriate for crosshair or symmetric designs)
+
+## Theme Examples
+
+### Code Editor Theme
+
+From the custom-theme example:
+
+```json
+{
+  "theme": {
+    "cursor": {
+      "image": "./cursor.svg",
+      "size": 32,
+      "hotspot": "center"
+    },
+    "hud": {
+      "background": "rgba(30, 41, 59, 0.85)",
+      "color": "#e2e8f0",
+      "fontSize": 48,
+      "fontFamily": "\"SF Mono\", \"Fira Code\", monospace",
+      "borderRadius": 12,
+      "position": "top"
+    }
+  }
+}
+```
+
+This creates a dark, code-focused aesthetic with:
+
+- Larger cursor (32px)
+- Monospace font for HUD
+- Top-positioned HUD (doesn't obscure code at bottom)
+- Dark slate background with lighter text
+
+### Minimalist Theme
+
+```json
+{
+  "theme": {
+    "cursor": {
+      "size": 20
+    },
+    "hud": {
+      "background": "rgba(255, 255, 255, 0.9)",
+      "color": "#1f2937",
+      "fontSize": 42,
+      "borderRadius": 8
+    }
+  }
+}
+```
+
+Clean, light theme with smaller cursor and light HUD background.
+
+### Bold Accent Theme
+
+```json
+{
+  "theme": {
+    "cursor": {
+      "size": 28
+    },
+    "hud": {
+      "background": "rgba(99, 102, 241, 0.9)",
+      "color": "#ffffff",
+      "fontSize": 52,
+      "fontFamily": "\"Inter\", sans-serif",
+      "borderRadius": 16
+    }
+  }
+}
+```
+
+Bright indigo HUD that stands out clearly against any background.
+
+## Per-Video Overrides
+
+You can override the global theme for specific videos:
+
+```json
+{
+  "theme": {
+    "hud": {
+      "position": "bottom"
+    }
+  },
+  "videos": {
+    "header-demo": {
+      "url": "https://example.com",
+      "theme": {
+        "hud": {
+          "position": "top"
+        }
+      },
+      "steps": []
+    },
+    "footer-demo": {
+      "url": "https://example.com",
+      "steps": []
+    }
+  }
+}
+```
+
+Here `header-demo` uses a top-positioned HUD while `footer-demo` inherits the bottom position.
+
+## Implementation Details
+
+### Overlay Injection
+
+Webreel injects overlays into the page DOM before recording starts (packages/@webreel/core/src/overlays.ts:23):
+
+```typescript
+export async function injectOverlays(
+  client: CDPClient,
+  theme?: OverlayTheme,
+  initialPosition?: { x: number; y: number },
+): Promise<void> {
+  // Creates #__demo-cursor element
+  // Creates #__demo-keys element
+  // Applies theme styles
+}
+```
+
+These elements use:
+- `position: fixed` with `z-index: 999999` to stay on top
+- `pointer-events: none` to avoid interfering with interactions
+- CSS transitions for smooth show/hide animations
+
+### Show/Hide Timing
+
+The HUD appears when a key action starts and hides after a delay (packages/@webreel/core/src/actions.ts:554):
+
+```typescript
+await showKeys(client, displayParts);
+ctx.markEvent("key");
+// ... dispatch key events ...
+await pause(800);
+await hideKeys(client);
+```
+
+The 800ms delay lets viewers read the keystroke before it disappears.
+
+## Troubleshooting
+
+<Accordion title="Cursor not visible">
+
+**Cause**: The cursor SVG file path is incorrect or the file is malformed.
+
+**Solution**: Verify the path is relative to your `webreel.config.json`. Check the SVG is valid by opening it in a browser.
+
+</Accordion>
+
+<Accordion title="HUD appears behind page content">
+
+**Cause**: Your page has elements with very high `z-index` values.
+
+**Solution**: The HUD uses `z-index: 999999`. If your page uses higher values, this is expected. The recording still works correctly; the HUD just won't be visible during preview mode.
+
+</Accordion>
+
+<Accordion title="Custom font not loading">
+
+**Cause**: The font family you specified isn't available on the page.
+
+**Solution**: Include a fallback font family:
+
+```json
+{
+  "hud": {
+    "fontFamily": "\"Custom Font\", \"Fallback\", sans-serif"
+  }
+}
+```
+
+Or ensure the font is loaded on your page via `<link>` or `@font-face`.
+
+</Accordion>
+
+<Accordion title="Theme changes not appearing">
+
+**Cause**: Config file wasn't saved or has syntax errors.
+
+**Solution**: Validate your config:
+
+```bash
+npx webreel validate
+```
+
+Check for JSON syntax errors (missing commas, quotes, etc.).
+
+</Accordion>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Output Formats" icon="film" href="/guides/output-formats">
+    Configure MP4, GIF, and WebM output
+  </Card>
+  <Card title="Advanced Actions" icon="wand-magic-sparkles" href="/guides/advanced-actions">
+    Learn drag-and-drop and scrolling
+  </Card>
+  <Card title="Theme Reference" icon="palette" href="/config/theme-customization">
+    Complete theme configuration reference
+  </Card>
+</CardGroup>

@@ -1,0 +1,285 @@
+---
+title: "webreel install"
+description: "Download Chrome and ffmpeg to ~/.webreel"
+---
+
+## Overview
+
+The `install` command downloads and caches Chrome and ffmpeg binaries to `~/.webreel`. Both are also automatically downloaded on first use, so this command is optional but useful for:
+- Pre-installing dependencies before recording
+- Fixing corrupted or incomplete downloads
+- Ensuring binaries are ready in CI/CD environments
+
+## Syntax
+
+```bash
+webreel install [options]
+```
+
+## Options
+
+<table>
+  <tr>
+    <th>Option</th>
+    <th>Type</th>
+    <th>Default</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>`--force`</td>
+    <td>boolean</td>
+    <td>`false`</td>
+    <td>Delete cached binaries and re-download them</td>
+  </tr>
+</table>
+
+## Usage Examples
+
+### Install all dependencies
+
+Download Chrome and ffmpeg if not already cached:
+
+```bash
+webreel install
+```
+
+Output:
+
+```
+Installing Chrome (headless shell), Chrome (full, for preview), ffmpeg...
+
+Chrome (headless shell) ready: /home/user/.webreel/chrome-headless-shell/chrome-headless-shell
+Chrome (full, for preview) ready: /home/user/.webreel/chrome/chrome
+ffmpeg ready: /home/user/.webreel/ffmpeg/ffmpeg
+
+All dependencies installed.
+```
+
+### Force reinstall
+
+Delete cached binaries and download fresh copies:
+
+```bash
+webreel install --force
+```
+
+This is useful if:
+- Binaries are corrupted
+- Downloads were interrupted
+- You want to update to newer versions
+
+## Installed Components
+
+### Chrome Headless Shell
+
+- **Location**: `~/.webreel/chrome-headless-shell/`
+- **Purpose**: Used by `webreel record` for fast, headless recording
+- **Size**: ~100-150MB
+- **Platform**: Downloads the correct binary for your OS (Linux, macOS, Windows)
+
+### Chrome (Full Browser)
+
+- **Location**: `~/.webreel/chrome/`
+- **Purpose**: Used by `webreel preview` for visible browser debugging
+- **Size**: ~150-200MB
+- **Platform**: Downloads the correct binary for your OS
+
+### ffmpeg
+
+- **Location**: `~/.webreel/ffmpeg/`
+- **Purpose**: Encodes raw frames into MP4, GIF, or WebM video files
+- **Size**: ~50-80MB
+- **Platform**: Downloads the correct binary for your OS
+
+## Download Behavior
+
+### Automatic detection
+
+The install command automatically:
+- Detects your operating system (Linux, macOS, Windows)
+- Selects the appropriate architecture (x64, arm64)
+- Downloads compatible binaries
+
+### Progress indication
+
+During download, you will see progress for each component. Downloads run in parallel to save time.
+
+### Caching
+
+Once downloaded, binaries are cached and reused:
+- Subsequent runs of `webreel record` or `webreel preview` use cached versions
+- No re-download unless you use `--force`
+- Cache persists across terminal sessions
+
+## Environment Variable Overrides
+
+You can skip downloads by pointing to existing binaries:
+
+### Chrome Headless Shell
+
+```bash
+export CHROME_HEADLESS_PATH=/usr/bin/chrome-headless-shell
+webreel install
+```
+
+Output:
+
+```
+Skipping Chrome (headless shell), using CHROME_HEADLESS_PATH=/usr/bin/chrome-headless-shell
+```
+
+### Chrome Full Browser
+
+```bash
+export CHROME_PATH=/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome
+webreel install
+```
+
+### ffmpeg
+
+```bash
+export FFMPEG_PATH=/usr/local/bin/ffmpeg
+webreel install
+```
+
+### All overrides
+
+If all three are set:
+
+```bash
+export CHROME_HEADLESS_PATH=/usr/bin/chrome-headless-shell
+export CHROME_PATH=/usr/bin/chrome
+export FFMPEG_PATH=/usr/bin/ffmpeg
+webreel install
+```
+
+Output:
+
+```
+Nothing to install.
+```
+
+## When to Use
+
+### Pre-installation for CI/CD
+
+Run install before recording to avoid download delays:
+
+```yaml
+steps:
+  - name: Install webreel dependencies
+    run: npx webreel install
+  
+  - name: Record videos
+    run: npx webreel record
+```
+
+### Fix corrupted downloads
+
+If recording fails with binary errors:
+
+```bash
+webreel install --force
+webreel record
+```
+
+### Offline preparation
+
+Download binaries while online, then record offline:
+
+```bash
+webreel install
+# Disconnect from network
+webreel record  # Uses cached binaries
+```
+
+### Docker images
+
+Pre-install in Dockerfile to speed up container startup:
+
+```dockerfile
+RUN npx webreel install
+```
+
+## Error Handling
+
+### Download failures
+
+If a download fails:
+
+```
+Chrome (headless shell) failed: Network error during download
+ffmpeg ready: /home/user/.webreel/ffmpeg/ffmpeg
+
+Failed to install: Chrome (headless shell)
+```
+
+The command:
+- Reports which components failed
+- Exits with code 1
+- Leaves successfully downloaded components cached
+
+Retry with:
+
+```bash
+webreel install
+```
+
+### Insufficient disk space
+
+Total required space: ~300-400MB
+
+If disk is full, you will see OS-level errors. Free up space and retry.
+
+## Cache Management
+
+### Cache location
+
+All binaries are stored in:
+
+```
+~/.webreel/
+  chrome-headless-shell/
+  chrome/
+  ffmpeg/
+  raw/           # Raw recordings
+  timelines/     # Timeline data
+  frames/        # Debug frames (if --frames used)
+```
+
+### Clear cache
+
+To remove all cached binaries:
+
+```bash
+rm -rf ~/.webreel/chrome-headless-shell
+rm -rf ~/.webreel/chrome
+rm -rf ~/.webreel/ffmpeg
+```
+
+Then reinstall:
+
+```bash
+webreel install
+```
+
+### Update binaries
+
+Currently, webreel does not auto-update. To get newer versions:
+
+```bash
+webreel install --force
+```
+
+<Tip>
+Run `webreel install` once after installing webreel to avoid delays during your first recording.
+</Tip>
+
+<Note>
+Chrome and ffmpeg are open-source and downloaded from official distribution channels. No webreel account or authentication is required.
+</Note>
+
+## Related Commands
+
+- [`webreel record`](/commands/record) - Record videos (auto-installs if needed)
+- [`webreel preview`](/commands/preview) - Preview in browser (auto-installs if needed)

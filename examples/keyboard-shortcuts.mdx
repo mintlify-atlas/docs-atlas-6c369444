@@ -1,0 +1,125 @@
+---
+title: Keyboard Shortcuts
+description: Press key combinations and display them in the HUD
+---
+
+The keyboard-shortcuts example demonstrates how to simulate keyboard commands and display them in the keystroke HUD overlay using a code editor interface.
+
+## Configuration
+
+Here's the complete `webreel.config.json` for this example:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "keyboard-shortcuts": {
+      "url": "./web/index.html",
+      "viewport": { "width": 1920, "height": 1080 },
+      "zoom": 2,
+      "waitFor": ".editor",
+      "defaultDelay": 600,
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "click", "selector": ".editor" },
+        { "action": "key", "key": "cmd+a" },
+        { "action": "key", "key": "cmd+b", "delay": 800 },
+        { "action": "click", "selector": ".editor p:first-of-type" },
+        { "action": "key", "key": "cmd+s", "delay": 1200 },
+        { "action": "key", "key": "cmd+k", "delay": 1000 },
+        { "action": "key", "key": "Escape", "delay": 800 },
+        { "action": "pause", "ms": 500 }
+      ]
+    }
+  }
+}
+```
+
+## What It Demonstrates
+
+### Key Action
+
+The `key` action simulates keyboard input and displays it in the HUD:
+
+```json
+{ "action": "key", "key": "cmd+a" }
+```
+
+The `key` field accepts:
+- Modifier combinations: `cmd+a`, `ctrl+c`, `shift+tab`
+- Single keys: `Escape`, `Enter`, `ArrowDown`
+- Function keys: `F1`, `F12`
+
+### Modifier Combinations
+
+The example demonstrates common editor shortcuts:
+
+```json
+{ "action": "key", "key": "cmd+a" }   // Select all
+{ "action": "key", "key": "cmd+b" }   // Bold
+{ "action": "key", "key": "cmd+s" }   // Save
+{ "action": "key", "key": "cmd+k" }   // Command palette
+```
+
+Webreel automatically translates `cmd` to `ctrl` on Windows and Linux.
+
+### Single Keys
+
+Non-modifier keys work the same way:
+
+```json
+{ "action": "key", "key": "Escape" }
+```
+
+Common single keys include:
+- `Escape`, `Enter`, `Tab`, `Backspace`
+- `ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight`
+- `Space`, `Delete`, `Home`, `End`
+
+### Keystroke HUD Overlay
+
+When a `key` action is performed, webreel displays the keystroke in an overlay at the bottom of the screen. This helps viewers understand what keyboard shortcuts are being used.
+
+The HUD appearance can be customized with the `theme.hud` configuration (see [Custom Theme](/examples/custom-theme)).
+
+### Timing Between Keystrokes
+
+The `defaultDelay` of 600ms provides breathing room between shortcuts:
+
+```json
+"defaultDelay": 600
+```
+
+Individual steps can override this with longer delays:
+
+```json
+{ "action": "key", "key": "cmd+s", "delay": 1200 }
+```
+
+This 1200ms delay gives viewers time to see the save action complete before the next command.
+
+### Combining Keys with Clicks
+
+The example mixes keyboard and mouse interactions:
+
+```json
+{ "action": "click", "selector": ".editor" },
+{ "action": "key", "key": "cmd+a" }
+```
+
+Clicking the editor first ensures it has focus before pressing keyboard shortcuts.
+
+## Running the Example
+
+```bash
+cd examples/keyboard-shortcuts
+webreel record
+```
+
+The output video will be saved to `videos/keyboard-shortcuts.mp4`.
+
+## Next Steps
+
+- [Form Filling](/examples/form-filling) - Learn about typing text
+- [Custom Theme](/examples/custom-theme) - Customize the HUD appearance
+- [Page Scrolling](/examples/page-scrolling) - Scroll the page

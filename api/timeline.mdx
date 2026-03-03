@@ -1,0 +1,390 @@
+---
+title: 'InteractionTimeline'
+description: 'Track cursor movements and interaction events frame-by-frame'
+---
+
+The `InteractionTimeline` class records cursor position, scale, and HUD state for each frame of a recording. It enables separate composition of overlays onto clean video.
+
+## Constructor
+
+```typescript
+new InteractionTimeline(
+  width?: number,
+  height?: number,
+  options?: {
+    zoom?: number;
+    fps?: number;
+    initialCursor?: { x: number; y: number };
+    cursorSvg?: string;
+    cursorSize?: number;
+    cursorHotspot?: 'top-left' | 'center';
+    hud?: Partial<HudConfig>;
+    loadedFrames?: FrameData[];
+    loadedEvents?: SoundEvent[];
+  }
+)
+```
+
+<ParamField path="width" type="number" default="1080">
+  Viewport width in pixels
+</ParamField>
+
+<ParamField path="height" type="number" default="1080">
+  Viewport height in pixels
+</ParamField>
+
+<ParamField path="options.zoom" type="number" default="1">
+  Display zoom factor (scales cursor and HUD)
+</ParamField>
+
+<ParamField path="options.fps" type="number" default="60">
+  Target frames per second
+</ParamField>
+
+<ParamField path="options.initialCursor" type="{ x: number; y: number }">
+  Starting cursor position
+</ParamField>
+
+<ParamField path="options.cursorSvg" type="string">
+  Custom cursor SVG markup
+</ParamField>
+
+<ParamField path="options.cursorSize" type="number" default="24">
+  Cursor size in pixels (before zoom)
+</ParamField>
+
+<ParamField path="options.cursorHotspot" type="'top-left' | 'center'" default="'top-left'">
+  Cursor hotspot alignment
+</ParamField>
+
+<ParamField path="options.hud" type="Partial<HudConfig>">
+  HUD theme customization
+  
+  ```typescript
+  interface HudConfig {
+    background: string;      // CSS color
+    color: string;           // CSS color
+    fontSize: number;        // In pixels
+    fontFamily: string;      // CSS font-family
+    borderRadius: number;    // In pixels
+    position: 'top' | 'bottom';
+  }
+  ```
+</ParamField>
+
+<ParamField path="options.loadedFrames" type="FrameData[]">
+  Pre-existing frame data for loading saved timelines
+</ParamField>
+
+<ParamField path="options.loadedEvents" type="SoundEvent[]">
+  Pre-existing sound events for loading saved timelines
+</ParamField>
+
+## Methods
+
+### setCursorPath()
+
+Set a series of cursor positions to animate across multiple frames.
+
+```typescript
+timeline.setCursorPath(positions)
+```
+
+<ParamField path="positions" type="Point[]" required>
+  Array of `{ x: number, y: number }` positions
+</ParamField>
+
+Each call to `tick()` advances through the path until complete.
+
+### setCursorScale()
+
+Set the cursor scale factor (for click down/up animation).
+
+```typescript
+timeline.setCursorScale(scale)
+```
+
+<ParamField path="scale" type="number" required>
+  Scale multiplier (e.g., 0.75 for pressed state, 1.0 for normal)
+</ParamField>
+
+### showHud()
+
+Display keyboard shortcut labels.
+
+```typescript
+timeline.showHud(labels)
+```
+
+<ParamField path="labels" type="string[]" required>
+  Array of label strings (e.g., `['⌘', 'K']` for Cmd+K)
+</ParamField>
+
+### hideHud()
+
+Hide the keyboard shortcut HUD.
+
+```typescript
+timeline.hideHud()
+```
+
+### addEvent()
+
+Record an interaction event with timestamp.
+
+```typescript
+timeline.addEvent(type)
+```
+
+<ParamField path="type" type="'click' | 'key'" required>
+  Event type for sound effects
+</ParamField>
+
+Timestamp is calculated from current frame count and FPS.
+
+### tick()
+
+Advance the timeline by one frame.
+
+```typescript
+timeline.tick()
+```
+
+This method:
+- Advances cursor along the current path if set
+- Records current cursor and HUD state
+- Resolves any pending `waitForNextTick()` promises
+- Increments frame count
+
+### tickDuplicate()
+
+Duplicate the current frame state without advancing the cursor path.
+
+```typescript
+timeline.tickDuplicate()
+```
+
+Useful when dropped frames need to be compensated for.
+
+### waitForNextTick()
+
+Wait for the next frame tick.
+
+```typescript
+await timeline.waitForNextTick()
+```
+
+Used by `typeText()` to synchronize typing with frame capture.
+
+### getEvents()
+
+Get all recorded sound events.
+
+```typescript
+const events = timeline.getEvents()
+```
+
+<ResponseField name="events" type="SoundEvent[]">
+  Array of `{ type: 'click' | 'key', timeMs: number }`
+</ResponseField>
+
+### getFrameCount()
+
+Get the total number of frames recorded.
+
+```typescript
+const count = timeline.getFrameCount()
+```
+
+<ResponseField name="count" type="number">
+  Total frame count
+</ResponseField>
+
+### toJSON()
+
+Serialize timeline to JSON.
+
+```typescript
+const data = timeline.toJSON()
+```
+
+<ResponseField name="data" type="TimelineData">
+  Complete timeline data structure
+  
+  ```typescript
+  interface TimelineData {
+    fps: number;
+    width: number;
+    height: number;
+    zoom: number;
+    theme: {
+      cursorSvg: string;
+      cursorSize: number;
+      cursorHotspot: 'top-left' | 'center';
+      hud: {
+        background: string;
+        color: string;
+        fontSize: number;
+        fontFamily: string;
+        borderRadius: number;
+        position: 'top' | 'bottom';
+      };
+    };
+    frames: FrameData[];
+    events: SoundEvent[];
+  }
+  ```
+</ResponseField>
+
+### save()
+
+Save timeline to a JSON file.
+
+```typescript
+timeline.save(path)
+```
+
+<ParamField path="path" type="string" required>
+  File path to write JSON data
+</ParamField>
+
+```typescript
+timeline.save('./timeline.json');
+```
+
+### load() (static)
+
+Load a timeline from JSON data.
+
+```typescript
+const timeline = InteractionTimeline.load(json)
+```
+
+<ParamField path="json" type="TimelineData" required>
+  Timeline data structure
+</ParamField>
+
+<ResponseField name="timeline" type="InteractionTimeline">
+  Reconstructed timeline instance
+</ResponseField>
+
+```typescript
+import { readFileSync } from 'fs';
+import { InteractionTimeline } from '@webreel/core';
+
+const data = JSON.parse(readFileSync('./timeline.json', 'utf-8'));
+const timeline = InteractionTimeline.load(data);
+```
+
+## Usage Example
+
+### Recording with Timeline
+
+```typescript
+import { 
+  Recorder, 
+  RecordingContext,
+  InteractionTimeline,
+  clickAt 
+} from '@webreel/core';
+
+// Create timeline
+const timeline = new InteractionTimeline(1920, 1080, {
+  fps: 60,
+  cursorSvg: customCursorSvg,
+  hud: {
+    background: 'rgba(0,0,0,0.8)',
+    fontSize: 56
+  }
+});
+
+// Configure context
+const ctx = new RecordingContext();
+ctx.setMode('record');
+ctx.setTimeline(timeline);
+
+// Record clean video
+const recorder = new Recorder(1920, 1080);
+recorder.setTimeline(timeline);
+
+await recorder.start(client, './clean.mp4', ctx);
+
+// Perform interactions
+await clickAt(ctx, client, 500, 300);
+
+// Stop recording
+await recorder.stop();
+
+// Save timeline for compositing
+timeline.save('./timeline.json');
+```
+
+### Inspecting Timeline Data
+
+```typescript
+const data = timeline.toJSON();
+
+console.log(`Total frames: ${data.frames.length}`);
+console.log(`Duration: ${data.frames.length / data.fps}s`);
+console.log(`Events: ${data.events.length}`);
+
+// Inspect specific frame
+const frame = data.frames[0];
+console.log('Cursor position:', frame.cursor.x, frame.cursor.y);
+console.log('Cursor scale:', frame.cursor.scale);
+if (frame.hud) {
+  console.log('HUD labels:', frame.hud.labels);
+}
+```
+
+## Frame Data Structure
+
+Each frame contains:
+
+```typescript
+interface FrameData {
+  cursor: {
+    x: number;        // Horizontal position
+    y: number;        // Vertical position
+    scale: number;    // Scale factor (0.75 when pressed, 1.0 otherwise)
+  };
+  hud: {
+    labels: string[]; // Keyboard shortcut labels
+  } | null;
+}
+```
+
+## Custom Cursor Design
+
+Customize the cursor appearance:
+
+```typescript
+const customCursor = `
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <circle cx="16" cy="16" r="12" fill="#ff0000" stroke="#000" stroke-width="2"/>
+</svg>
+`;
+
+const timeline = new InteractionTimeline(1920, 1080, {
+  cursorSvg: customCursor,
+  cursorSize: 32,
+  cursorHotspot: 'center'
+});
+```
+
+## HUD Customization
+
+Customize the keyboard shortcut overlay:
+
+```typescript
+const timeline = new InteractionTimeline(1920, 1080, {
+  hud: {
+    background: 'rgba(30, 30, 30, 0.95)',
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 64,
+    fontFamily: '"SF Pro Display", system-ui, sans-serif',
+    borderRadius: 24,
+    position: 'top'
+  }
+});
+```

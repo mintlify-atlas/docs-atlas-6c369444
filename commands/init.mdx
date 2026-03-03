@@ -1,0 +1,180 @@
+---
+title: "webreel init"
+description: "Scaffold a new webreel configuration file"
+---
+
+## Overview
+
+The `init` command creates a new `webreel.config.json` file with a starter template. The generated config includes a JSON schema reference for IDE autocompletion and inline documentation.
+
+## Syntax
+
+```bash
+webreel init [options]
+```
+
+## Options
+
+<table>
+  <tr>
+    <th>Option</th>
+    <th>Type</th>
+    <th>Default</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>`--name <name>`</td>
+    <td>string</td>
+    <td>`my-video`</td>
+    <td>Name of the initial video in the config</td>
+  </tr>
+  <tr>
+    <td>`--url <url>`</td>
+    <td>string</td>
+    <td>`https://example.com`</td>
+    <td>Starting URL for the video</td>
+  </tr>
+  <tr>
+    <td>`-o, --output <file>`</td>
+    <td>string</td>
+    <td>`webreel.config.json`</td>
+    <td>Output file path for the config</td>
+  </tr>
+</table>
+
+## Usage Examples
+
+### Create a default config
+
+Generate a config with default values:
+
+```bash
+webreel init
+```
+
+This creates `webreel.config.json` with a video named `my-video` pointing to `https://example.com`.
+
+### Specify video name and URL
+
+Create a config for a login flow:
+
+```bash
+webreel init --name login-flow --url https://myapp.com
+```
+
+Generated config:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "outDir": "./videos",
+  "defaultDelay": 500,
+  "videos": {
+    "login-flow": {
+      "url": "https://myapp.com",
+      "viewport": { "width": 1920, "height": 1080 },
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "click", "text": "Get Started" },
+        { "action": "key", "key": "mod+a", "delay": 1000 }
+      ]
+    }
+  }
+}
+```
+
+### Custom output path
+
+Create a config with a specific filename:
+
+```bash
+webreel init --name hero -o hero.config.json
+```
+
+### Combine all options
+
+Specify all customizations at once:
+
+```bash
+webreel init --name onboarding --url https://app.example.com/signup -o onboarding.config.json
+```
+
+## Generated Configuration
+
+The init command creates a file with:
+
+### Schema reference
+
+```json
+"$schema": "https://webreel.dev/schema/v1.json"
+```
+
+This enables IDE autocompletion and inline validation in VS Code, Cursor, JetBrains IDEs, and other editors that support JSON schemas.
+
+### Default settings
+
+- **outDir**: `./videos` - where recordings are saved
+- **defaultDelay**: `500` - milliseconds to wait after each step
+- **viewport**: `1920x1080` - browser dimensions
+
+### Example steps
+
+The template includes three common actions:
+1. **pause** - initial delay before starting
+2. **click** - clicking an element by text
+3. **key** - pressing a keyboard shortcut
+
+These serve as starting points you can modify or replace.
+
+### Inline comments
+
+The generated config includes helpful comments explaining:
+- What each field does
+- How to override defaults
+- Links to full documentation
+- Common patterns and options
+
+## After Initialization
+
+Once you have created your config:
+
+1. **Edit the steps** - Replace the example steps with your actual workflow
+2. **Test with preview** - Run `webreel preview` to verify your steps
+3. **Record** - Run `webreel record` to generate your video
+
+## Error Handling
+
+### File already exists
+
+If the output file already exists, you will see:
+
+```
+Error: File already exists: webreel.config.json
+```
+
+To resolve this:
+- Use a different output path with `-o`
+- Rename or delete the existing file
+- Edit the existing file manually instead
+
+## When to Use
+
+Use `init` when you:
+- Are starting a new webreel project
+- Need a template to base your config on
+- Want to quickly scaffold multiple config files
+- Need IDE autocompletion for editing configs
+
+<Tip>
+After running `init`, open the generated file in VS Code or another JSON-schema-aware editor. You will get autocompletion for all config options and step actions.
+</Tip>
+
+<Note>
+The init command does not validate that the URL is accessible. Use `webreel validate` and `webreel preview` to test your configuration.
+</Note>
+
+## Related Commands
+
+- [`webreel validate`](/commands/validate) - Check your config for errors
+- [`webreel preview`](/commands/preview) - Test your config in a visible browser
+- [`webreel record`](/commands/record) - Record videos from your config

@@ -1,0 +1,79 @@
+---
+title: Hello World
+description: The simplest possible webreel example
+---
+
+The hello-world example demonstrates the basic setup for a webreel recording. It opens a landing page, waits for it to load, pauses briefly, and clicks a call-to-action button.
+
+## Configuration
+
+Here's the complete `webreel.config.json` for this example:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "hello-world": {
+      "url": "./web/index.html",
+      "viewport": { "width": 1920, "height": 1080 },
+      "zoom": 2,
+      "waitFor": ".cta",
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "click", "selector": "a.cta", "delay": 1000 }
+      ]
+    }
+  }
+}
+```
+
+## What It Demonstrates
+
+### Minimal Setup
+
+This example shows the minimum required fields to create a webreel recording:
+- A `url` to navigate to
+- A `viewport` size for the browser window
+- A `zoom` level for higher quality output
+- An array of `steps` defining the interactions
+
+### Wait For Ready State
+
+The `waitFor` field ensures the page is fully loaded before recording starts:
+
+```json
+"waitFor": ".cta"
+```
+
+Webreel waits until the `.cta` element appears in the DOM, guaranteeing the page is ready for interaction.
+
+### Basic Actions
+
+The example uses two fundamental actions:
+
+1. **Pause**: Waits for 500ms to let the page settle
+   ```json
+   { "action": "pause", "ms": 500 }
+   ```
+
+2. **Click**: Clicks the CTA button after a 1-second delay
+   ```json
+   { "action": "click", "selector": "a.cta", "delay": 1000 }
+   ```
+
+The `delay` field adds a pause before the next step, making the recording feel more natural.
+
+## Running the Example
+
+```bash
+cd examples/hello-world
+webreel record
+```
+
+The output video will be saved to `videos/hello-world.mp4`.
+
+## Next Steps
+
+- [Form Filling](/examples/form-filling) - Learn how to type into form fields
+- [Keyboard Shortcuts](/examples/keyboard-shortcuts) - Use keyboard commands
+- [Custom Theme](/examples/custom-theme) - Customize the cursor and HUD appearance

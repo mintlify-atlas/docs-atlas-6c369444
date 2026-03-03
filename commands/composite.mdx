@@ -1,0 +1,270 @@
+---
+title: "webreel composite"
+description: "Re-composite videos from stored raw recordings and timelines"
+---
+
+## Overview
+
+The `composite` command rebuilds final video output from previously recorded raw footage and timeline data. This lets you change visual overlays, sound effects, or output format without re-recording the browser automation.
+
+## Syntax
+
+```bash
+webreel composite [videos...] [options]
+```
+
+## Arguments
+
+<table>
+  <tr>
+    <th>Argument</th>
+    <th>Type</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>`videos`</td>
+    <td>string[]</td>
+    <td>Optional. Specific video names to composite. If omitted, all videos are composited.</td>
+  </tr>
+</table>
+
+## Options
+
+<table>
+  <tr>
+    <th>Option</th>
+    <th>Type</th>
+    <th>Default</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>`-c, --config <path>`</td>
+    <td>string</td>
+    <td>`webreel.config.json`</td>
+    <td>Path to the configuration file</td>
+  </tr>
+</table>
+
+## How It Works
+
+When you run `webreel record`, webreel stores:
+
+1. **Raw recording** - `.webreel/raw/<video-name>.mp4` - the unprocessed screen capture
+2. **Timeline data** - `.webreel/timelines/<video-name>.timeline.json` - cursor movements, clicks, keystrokes, and timing
+
+The `composite` command reads these files and generates the final output with:
+- Cursor overlays and animations
+- Keystroke HUD display
+- Sound effects (if configured)
+- Custom theme styling
+
+## Usage Examples
+
+### Composite all videos
+
+Rebuild all videos from stored data:
+
+```bash
+webreel composite
+```
+
+### Composite specific videos
+
+Rebuild only the `hero` video:
+
+```bash
+webreel composite hero
+```
+
+Rebuild multiple specific videos:
+
+```bash
+webreel composite hero login signup
+```
+
+### Use a custom config file
+
+Composite videos using a different config:
+
+```bash
+webreel composite -c custom.config.json
+```
+
+## Output
+
+Composited videos are saved to the same location as `webreel record`:
+- Default: `videos/<video-name>.mp4`
+- Custom: path specified in the `output` field of your config
+
+Thumbnails are also regenerated if thumbnail generation is configured.
+
+## When to Use
+
+Use `composite` when you want to:
+
+### Change visual styling
+
+Update cursor appearance, HUD colors, or theme without re-recording:
+
+```json
+{
+  "videos": {
+    "demo": {
+      "theme": {
+        "cursor": {
+          "color": "#3b82f6",
+          "size": 48
+        },
+        "hud": {
+          "backgroundColor": "rgba(0, 0, 0, 0.8)"
+        }
+      }
+    }
+  }
+}
+```
+
+After changing theme settings, run:
+
+```bash
+webreel composite demo
+```
+
+### Toggle sound effects
+
+Add or remove sound effects:
+
+```json
+{
+  "videos": {
+    "demo": {
+      "sfx": {
+        "enabled": true,
+        "click": "path/to/click.wav",
+        "keypress": "path/to/keypress.wav"
+      }
+    }
+  }
+}
+```
+
+Run composite to apply the changes:
+
+```bash
+webreel composite demo
+```
+
+### Change output format
+
+Convert to a different video format:
+
+```json
+{
+  "videos": {
+    "demo": {
+      "output": "demo.gif"
+    }
+  }
+}
+```
+
+Then composite to generate the GIF:
+
+```bash
+webreel composite demo
+```
+
+Supported formats: `.mp4`, `.gif`, `.webm`
+
+### Faster iteration
+
+Compositing is much faster than re-recording because:
+- No browser automation needed
+- No waiting for page loads or animations
+- Only ffmpeg encoding runs
+
+Typical composite times: 5-15 seconds vs 30-120 seconds for recording.
+
+## Error Handling
+
+### Raw video not found
+
+If you see:
+
+```
+Error: Raw video not found: .webreel/raw/hero.mp4. Run "webreel record" first.
+```
+
+This means the video has never been recorded. Run:
+
+```bash
+webreel record hero
+```
+
+### Timeline not found
+
+If you see:
+
+```
+Error: Timeline not found: .webreel/timelines/hero.timeline.json. Run "webreel record" first.
+```
+
+This also means the video needs to be recorded first.
+
+### Invalid timeline file
+
+If the timeline JSON is corrupted:
+
+```
+Error: Invalid timeline file: .webreel/timelines/hero.timeline.json
+```
+
+Re-record the video to regenerate the timeline:
+
+```bash
+webreel record hero
+```
+
+## Workflow Example
+
+A typical workflow using composite:
+
+```bash
+# Initial recording (takes 60 seconds)
+webreel record hero
+
+# Tweak cursor color in config
+# Edit webreel.config.json
+
+# Fast re-composite (takes 10 seconds)
+webreel composite hero
+
+# Adjust HUD position
+# Edit webreel.config.json again
+
+# Fast re-composite again
+webreel composite hero
+```
+
+<Tip>
+Use `composite` to rapidly iterate on visual styling. Record once, then tweak appearance and re-composite as many times as needed.
+</Tip>
+
+<Note>
+Composite uses the current config file to determine theme, sfx, and output settings. Make sure your config changes are saved before running composite.
+</Note>
+
+## What Cannot Be Changed
+
+Composite cannot change:
+- The actual browser automation steps
+- Page content or interactions
+- Viewport dimensions
+- Video duration or frame timing
+
+To change these, you must re-record with `webreel record`.
+
+## Related Commands
+
+- [`webreel record`](/commands/record) - Create the initial raw recording and timeline
+- [`webreel validate`](/commands/validate) - Validate config changes before compositing

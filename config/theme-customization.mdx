@@ -1,0 +1,352 @@
+---
+title: Theme Customization
+description: Customize cursor appearance and HUD overlay styling in webreel recordings
+---
+
+## Overview
+
+Webreel overlays a cursor and keystroke HUD on recordings. You can customize the appearance of both using the `theme` field.
+
+Theme configuration can be set at the top level (affects all videos) or per-video (overrides top-level settings).
+
+## Theme Configuration
+
+<ParamField path="theme" type="ThemeConfig">
+  Cursor and HUD overlay customization.
+
+  <Expandable title="ThemeConfig Fields">
+    <ParamField path="cursor" type="CursorConfig">
+      Cursor appearance settings.
+    </ParamField>
+
+    <ParamField path="hud" type="HudConfig">
+      Keystroke HUD overlay settings.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Cursor Customization
+
+<ParamField path="cursor.image" type="string">
+  Path to a custom cursor image (SVG, PNG, etc.). Overrides the default cursor.
+
+  ```json
+  {
+    "theme": {
+      "cursor": {
+        "image": "./assets/custom-cursor.svg"
+      }
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField path="cursor.size" type="number" default="24">
+  Cursor size in pixels. The image is scaled to this size.
+
+  ```json
+  {
+    "theme": {
+      "cursor": {
+        "size": 32
+      }
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField path="cursor.hotspot" type="'top-left' | 'center'" default="'top-left'">
+  Cursor hotspot position. Determines which part of the cursor image represents the click point.
+
+  - `"top-left"` - Click point is at the top-left corner (default)
+  - `"center"` - Click point is at the center of the image
+
+  ```json
+  {
+    "theme": {
+      "cursor": {
+        "hotspot": "center"
+      }
+    }
+  }
+  ```
+
+  <Note>
+    Use `"center"` for touch-style cursors on mobile viewports.
+  </Note>
+</ParamField>
+
+### Default Cursor SVG
+
+The default cursor is a white arrow with a black stroke:
+
+```svg
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <path d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87c.45 0 .67-.54.35-.85L5.85 2.35a.5.5 0 0 0-.35.86z" fill="#fff" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/>
+</svg>
+```
+
+## HUD Overlay Customization
+
+The HUD displays keyboard shortcuts and action labels during recording.
+
+<ParamField path="hud.background" type="string" default="'rgba(0,0,0,0.5)'">
+  Background color (CSS color value). Supports RGBA for transparency.
+
+  ```json
+  {
+    "theme": {
+      "hud": {
+        "background": "rgba(30, 41, 59, 0.85)"
+      }
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField path="hud.color" type="string" default="'rgba(255,255,255,0.85)'">
+  Text color (CSS color value).
+
+  ```json
+  {
+    "theme": {
+      "hud": {
+        "color": "#e2e8f0"
+      }
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField path="hud.fontSize" type="number" default="56">
+  Font size in pixels.
+
+  ```json
+  {
+    "theme": {
+      "hud": {
+        "fontSize": 48
+      }
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField path="hud.fontFamily" type="string" default='"Geist", -apple-system, BlinkMacSystemFont, sans-serif'>
+  Font family (CSS font-family value).
+
+  ```json
+  {
+    "theme": {
+      "hud": {
+        "fontFamily": "\"SF Mono\", \"Fira Code\", monospace"
+      }
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField path="hud.borderRadius" type="number" default="18">
+  Border radius in pixels.
+
+  ```json
+  {
+    "theme": {
+      "hud": {
+        "borderRadius": 12
+      }
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField path="hud.position" type="'top' | 'bottom'" default="'bottom'">
+  HUD position on screen.
+
+  ```json
+  {
+    "theme": {
+      "hud": {
+        "position": "top"
+      }
+    }
+  }
+  ```
+</ParamField>
+
+## Complete Theme Example
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "theme": {
+    "cursor": {
+      "image": "./cursor.svg",
+      "size": 32,
+      "hotspot": "center"
+    },
+    "hud": {
+      "background": "rgba(30, 41, 59, 0.85)",
+      "color": "#e2e8f0",
+      "fontSize": 48,
+      "fontFamily": "\"SF Mono\", \"Fira Code\", monospace",
+      "borderRadius": 12,
+      "position": "top"
+    }
+  },
+  "videos": {
+    "custom-theme": {
+      "url": "./web/index.html",
+      "viewport": { "width": 1920, "height": 1080 },
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "key", "key": "cmd+s", "delay": 1000 }
+      ]
+    }
+  }
+}
+```
+
+## Per-Video Theme Override
+
+Override the global theme for specific videos:
+
+```json
+{
+  "theme": {
+    "cursor": {
+      "size": 24,
+      "hotspot": "top-left"
+    },
+    "hud": {
+      "background": "rgba(0, 0, 0, 0.5)",
+      "fontSize": 56
+    }
+  },
+  "videos": {
+    "desktop-demo": {
+      "url": "https://example.com",
+      "steps": []
+    },
+    "mobile-demo": {
+      "url": "https://example.com",
+      "viewport": "iphone-15",
+      "theme": {
+        "cursor": {
+          "hotspot": "center",
+          "size": 40
+        },
+        "hud": {
+          "fontSize": 32
+        }
+      },
+      "steps": []
+    }
+  }
+}
+```
+
+## Custom Cursor Example
+
+Create a custom cursor SVG for a touch-style pointer:
+
+```svg
+<!-- touch-cursor.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <circle cx="16" cy="16" r="14" fill="rgba(59, 130, 246, 0.3)" stroke="#3b82f6" stroke-width="2"/>
+  <circle cx="16" cy="16" r="4" fill="#3b82f6"/>
+</svg>
+```
+
+```json
+{
+  "theme": {
+    "cursor": {
+      "image": "./touch-cursor.svg",
+      "size": 40,
+      "hotspot": "center"
+    }
+  },
+  "videos": {
+    "mobile-tap": {
+      "url": "https://example.com",
+      "viewport": "iphone-15",
+      "steps": [
+        { "action": "click", "selector": ".menu-btn" }
+      ]
+    }
+  }
+}
+```
+
+## HUD Position Example
+
+Position the HUD at the top for videos with important content at the bottom:
+
+```json
+{
+  "theme": {
+    "hud": {
+      "position": "top",
+      "background": "rgba(0, 0, 0, 0.7)",
+      "borderRadius": 8
+    }
+  },
+  "videos": {
+    "bottom-nav": {
+      "url": "https://example.com",
+      "steps": [
+        { "action": "key", "key": "cmd+k" },
+        { "action": "type", "text": "search" }
+      ]
+    }
+  }
+}
+```
+
+## Monospace Font Example
+
+Use a monospace font for code-focused recordings:
+
+```json
+{
+  "theme": {
+    "hud": {
+      "fontFamily": "\"JetBrains Mono\", \"Consolas\", monospace",
+      "fontSize": 44,
+      "background": "rgba(20, 20, 20, 0.9)",
+      "color": "#00ff00",
+      "borderRadius": 4
+    }
+  },
+  "videos": {
+    "editor-shortcuts": {
+      "url": "./editor.html",
+      "steps": [
+        { "action": "key", "key": "ctrl+shift+p" },
+        { "action": "key", "key": "cmd+d" },
+        { "action": "key", "key": "alt+shift+f" }
+      ]
+    }
+  }
+}
+```
+
+## Disabling the HUD
+
+To hide the HUD overlay entirely, set the background to fully transparent and the font size to 0:
+
+```json
+{
+  "theme": {
+    "hud": {
+      "background": "rgba(0, 0, 0, 0)",
+      "fontSize": 0
+    }
+  }
+}
+```
+
+<Note>
+  The cursor overlay cannot be disabled, but you can use a transparent 1x1 pixel PNG as the cursor image to effectively hide it.
+</Note>

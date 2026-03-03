@@ -1,0 +1,110 @@
+---
+title: "Installation"
+description: "Install webreel and set up your environment for recording browser videos"
+---
+
+## System requirements
+
+webreel requires Node.js version 18 or higher.
+
+<CodeGroup>
+
+```bash npm
+node --version
+```
+
+```bash yarn
+node --version
+```
+
+```bash pnpm
+node --version
+```
+
+</CodeGroup>
+
+<Tip>
+  If you need to upgrade Node.js, visit [nodejs.org](https://nodejs.org/) to download the latest LTS version.
+</Tip>
+
+## Install webreel
+
+Install webreel using your preferred package manager:
+
+<CodeGroup>
+
+```bash npm
+npm install webreel
+```
+
+```bash yarn
+yarn add webreel
+```
+
+```bash pnpm
+pnpm add webreel
+```
+
+</CodeGroup>
+
+<Note>
+  For global installation, use `npm install -g webreel` to access the `webreel` command from anywhere.
+</Note>
+
+## Automatic dependency installation
+
+webreel requires Chrome and ffmpeg to record videos. Both are automatically downloaded on first use to `~/.webreel` if not already installed.
+
+<Info>
+  The first time you run `webreel record`, it will download:
+  - **Chrome**: Headless browser for automation (approximately 150MB)
+  - **ffmpeg**: Video encoding library (approximately 50MB)
+  
+  This one-time download may take a few minutes depending on your connection speed.
+</Info>
+
+### Manual installation (optional)
+
+If you want to pre-install Chrome and ffmpeg without running a recording, use:
+
+```bash
+webreel install
+```
+
+If you encounter issues with corrupted or broken binaries, force a reinstall:
+
+```bash
+webreel install --force
+```
+
+## Verify installation
+
+Check that webreel is installed correctly:
+
+<CodeGroup>
+
+```bash Version check
+webreel --version
+```
+
+```bash Help command
+webreel --help
+```
+
+</CodeGroup>
+
+You should see the version number and available commands.
+
+## Next steps
+
+Now that webreel is installed, you're ready to record your first video:
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Follow the quickstart guide to record your first video
+  </Card>
+  
+  <Card title="CLI commands" icon="terminal" href="/commands/record">
+    Learn about all available webreel commands
+  </Card>
+</CardGroup>

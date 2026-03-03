@@ -1,0 +1,822 @@
+---
+title: Troubleshooting
+description: Common issues and solutions for webreel recordings
+---
+
+This guide covers common problems you might encounter and how to resolve them.
+
+## Selector Issues
+
+<Accordion title="Element not found: selector not found">
+
+**Error Message:**
+
+```
+Element not found: selector=".my-button"
+```
+
+**Causes:**
+
+1. The selector doesn't match any element
+2. The element hasn't loaded yet
+3. The element is in a shadow DOM
+4. The selector syntax is invalid
+
+**Solutions:**
+
+**Verify the selector**
+
+Open the page in Chrome DevTools:
+
+1. Navigate to your URL
+2. Open Console (Cmd+Option+J on macOS)
+3. Run: `document.querySelector('.my-button')`
+4. If it returns `null`, the selector is wrong
+
+**Add a wait condition**
+
+```json
+[
+  { "action": "wait", "selector": ".my-button", "timeout": 5000 },
+  { "action": "click", "selector": ".my-button" }
+]
+```
+
+Or use `waitFor` at the video level:
+
+```json
+{
+  "videos": {
+    "my-demo": {
+      "url": "https://example.com",
+      "waitFor": ".my-button",
+      "steps": [
+        { "action": "click", "selector": ".my-button" }
+      ]
+    }
+  }
+}
+```
+
+**Use text targeting instead**
+
+```json
+{ "action": "click", "text": "Submit" }
+```
+
+This finds any element containing "Submit" and is more resilient to markup changes.
+
+**Check for dynamic content**
+
+If content loads via JavaScript, add pauses:
+
+```json
+[
+  { "action": "pause", "ms": 1000 },
+  { "action": "click", "selector": ".my-button" }
+]
+```
+
+</Accordion>
+
+<Accordion title="Element not found: text not found">
+
+**Error Message:**
+
+```
+Element not found: text="Sign In"
+```
+
+**Causes:**
+
+1. Text doesn't exist on page
+2. Text is split across multiple elements
+3. Text has different capitalization
+4. Text hasn't loaded yet
+
+**Solutions:**
+
+**Check exact text**
+
+Text matching is exact and case-sensitive:
+
+- `"Sign In"` ≠ `"sign in"`
+- `"Sign In"` ≠ `"Sign  In"` (extra space)
+
+**Verify in DevTools**
+
+```javascript
+document.body.innerText.includes("Sign In")
+```
+
+If this returns `false`, the text isn't on the page.
+
+**Use a selector instead**
+
+```json
+{ "action": "click", "selector": "button[type='submit']" }
+```
+
+**Add a wait**
+
+```json
+[
+  { "action": "wait", "text": "Sign In", "timeout": 5000 },
+  { "action": "click", "text": "Sign In" }
+]
+```
+
+</Accordion>
+
+<Accordion title="Multiple elements found">
+
+**Problem:** Your selector or text matches multiple elements, and webreel clicks the wrong one.
+
+**Solutions:**
+
+**Use 'within' to scope**
+
+```json
+{
+  "action": "click",
+  "text": "Delete",
+  "within": ".modal"
+}
+```
+
+This only searches within `.modal`, ignoring other "Delete" buttons.
+
+**Make selector more specific**
+
+Instead of:
+
+```json
+{ "action": "click", "selector": "button" }
+```
+
+Use:
+
+```json
+{ "action": "click", "selector": "form#login button[type='submit']" }
+```
+
+**Use unique attributes**
+
+```json
+{ "action": "click", "selector": "[data-testid='submit-button']" }
+```
+
+</Accordion>
+
+## Timing Issues
+
+<Accordion title="Actions happen too fast">
+
+**Problem:** The recording executes too quickly, making it hard to follow.
+
+**Solutions:**
+
+**Set a default delay**
+
+```json
+{
+  "videos": {
+    "my-demo": {
+      "url": "https://example.com",
+      "defaultDelay": 800,
+      "steps": []
+    }
+  }
+}
+```
+
+All steps wait 800ms after completing.
+
+**Add per-step delays**
+
+```json
+[
+  { "action": "click", "text": "Menu", "delay": 1200 },
+  { "action": "click", "text": "Settings" }
+]
+```
+
+**Add pause steps**
+
+```json
+[
+  { "action": "click", "text": "Submit" },
+  { "action": "pause", "ms": 1500 },
+  { "action": "click", "text": "Confirm" }
+]
+```
+
+</Accordion>
+
+<Accordion title="Page not fully loaded">
+
+**Problem:** Recording starts before the page is ready.
+
+**Solutions:**
+
+**Use waitFor**
+
+```json
+{
+  "videos": {
+    "my-demo": {
+      "url": "https://example.com",
+      "waitFor": ".main-content",
+      "steps": []
+    }
+  }
+}
+```
+
+Webreel waits up to 30 seconds for `.main-content` to appear.
+
+**Add initial pause**
+
+```json
+{
+  "steps": [
+    { "action": "pause", "ms": 2000 },
+    { "action": "click", "text": "Start" }
+  ]
+}
+```
+
+**Wait for specific elements**
+
+```json
+[
+  { "action": "wait", "selector": "#app[data-loaded='true']" },
+  { "action": "click", "text": "Continue" }
+]
+```
+
+</Accordion>
+
+<Accordion title="Animations interfering with clicks">
+
+**Problem:** Elements are animating when webreel tries to click them.
+
+**Solutions:**
+
+**Add delays after navigation**
+
+```json
+[
+  { "action": "navigate", "url": "/page" },
+  { "action": "pause", "ms": 1000 },
+  { "action": "click", "text": "Button" }
+]
+```
+
+**Wait for element and pause**
+
+```json
+[
+  { "action": "wait", "selector": ".animated-element" },
+  { "action": "pause", "ms": 500 },
+  { "action": "click", "selector": ".animated-element" }
+]
+```
+
+</Accordion>
+
+## Binary Installation Problems
+
+<Accordion title="Chrome download failed">
+
+**Error Message:**
+
+```
+Failed to download Chrome
+```
+
+**Solutions:**
+
+**Check network connection**
+
+Webreel downloads Chrome from the internet on first run. Verify you have an active connection.
+
+**Retry installation**
+
+```bash
+npx webreel install --force
+```
+
+The `--force` flag re-downloads even if Chrome already exists.
+
+**Manual Chrome path**
+
+If you have Chrome installed, you can point to it by setting an environment variable (this is an advanced workaround and may require code changes).
+
+**Check disk space**
+
+Chrome requires ~300MB in `~/.webreel/`. Verify you have sufficient space:
+
+```bash
+df -h ~
+```
+
+</Accordion>
+
+<Accordion title="ffmpeg download failed">
+
+**Error Message:**
+
+```
+Failed to download ffmpeg
+```
+
+**Solutions:**
+
+**Force reinstall**
+
+```bash
+npx webreel install --force
+```
+
+**Check platform support**
+
+Webreel downloads ffmpeg for:
+
+- macOS (Intel and Apple Silicon)
+- Linux (x64 and arm64)
+- Windows (x64)
+
+Unsupported platforms must install ffmpeg manually and ensure it's in PATH.
+
+**Verify download**
+
+Check if ffmpeg exists:
+
+```bash
+ls -lh ~/.webreel/ffmpeg
+```
+
+If the file is 0 bytes or corrupted, delete and reinstall:
+
+```bash
+rm -rf ~/.webreel/ffmpeg
+npx webreel install
+```
+
+</Accordion>
+
+<Accordion title="Permission errors on binaries">
+
+**Error Message:**
+
+```
+EACCES: permission denied
+```
+
+**Solutions:**
+
+**Fix permissions**
+
+```bash
+chmod +x ~/.webreel/chrome/chrome
+chmod +x ~/.webreel/ffmpeg
+```
+
+**Reinstall**
+
+```bash
+rm -rf ~/.webreel
+npx webreel install
+```
+
+</Accordion>
+
+## Recording Issues
+
+<Accordion title="Recording produces a blank video">
+
+**Causes:**
+
+1. Page didn't load
+2. Viewport is wrong size
+3. Chrome crashed during recording
+
+**Solutions:**
+
+**Use preview mode first**
+
+```bash
+npx webreel preview
+```
+
+This runs in a visible browser so you can see what's happening.
+
+**Check verbose output**
+
+```bash
+npx webreel record --verbose
+```
+
+Look for errors in the step execution.
+
+**Verify the URL loads**
+
+Open the URL in your regular browser. If it doesn't load there, it won't load in webreel.
+
+**Check viewport size**
+
+Some pages break at unusual sizes. Try standard dimensions:
+
+```json
+{
+  "viewport": { "width": 1920, "height": 1080 }
+}
+```
+
+</Accordion>
+
+<Accordion title="Video is too short or cuts off">
+
+**Cause:** Recording stops before animations complete.
+
+**Solution:** Add a final pause:
+
+```json
+{
+  "steps": [
+    { "action": "click", "text": "Submit" },
+    { "action": "pause", "ms": 2000 }
+  ]
+}
+```
+
+This ensures the video captures the final state.
+
+</Accordion>
+
+<Accordion title="Cursor not visible in recording">
+
+**Cause:** Cursor theme or size is incompatible with page styles.
+
+**Solutions:**
+
+**Increase cursor size**
+
+```json
+{
+  "theme": {
+    "cursor": {
+      "size": 32
+    }
+  }
+}
+```
+
+**Use high-contrast cursor**
+
+Provide a custom SVG with a bright color:
+
+```json
+{
+  "theme": {
+    "cursor": {
+      "image": "./bright-cursor.svg"
+    }
+  }
+}
+```
+
+**Check z-index**
+
+If your page has elements with `z-index` over 999999, the cursor may be hidden behind them. This is expected behavior; the cursor is still functional.
+
+</Accordion>
+
+<Accordion title="Recording fails mid-execution">
+
+**Error Message:**
+
+```
+Step 3 (click) failed: ...
+```
+
+**Solutions:**
+
+**Use verbose mode**
+
+```bash
+npx webreel record --verbose
+```
+
+This shows exactly which step failed and why.
+
+**Test steps incrementally**
+
+Comment out later steps and add them back one at a time:
+
+```json
+{
+  "steps": [
+    { "action": "click", "text": "Step 1" },
+    { "action": "click", "text": "Step 2" }
+    // { "action": "click", "text": "Step 3" }
+  ]
+}
+```
+
+Record after each addition to isolate the problematic step.
+
+**Check browser console**
+
+Run in preview mode and check the browser console for JavaScript errors from your page.
+
+</Accordion>
+
+## Configuration Issues
+
+<Accordion title="Config file not found">
+
+**Error Message:**
+
+```
+Config file not found: webreel.config.json
+```
+
+**Solutions:**
+
+**Check working directory**
+
+```bash
+pwd
+ls -la webreel.config.json
+```
+
+Webreel looks for `webreel.config.json` in the current directory.
+
+**Specify config path**
+
+```bash
+npx webreel record -c path/to/config.json
+```
+
+**Create config**
+
+```bash
+npx webreel init
+```
+
+</Accordion>
+
+<Accordion title="JSON syntax errors">
+
+**Error Message:**
+
+```
+Unexpected token } in JSON
+```
+
+**Causes:**
+
+- Trailing comma in last array/object item
+- Missing quotes around keys
+- Missing comma between items
+- Unescaped quotes in strings
+
+**Solutions:**
+
+**Validate config**
+
+```bash
+npx webreel validate
+```
+
+This reports syntax errors with line numbers.
+
+**Use IDE validation**
+
+The `$schema` field enables autocomplete and validation in VS Code and other editors:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json"
+}
+```
+
+**Common fixes:**
+
+Remove trailing commas:
+
+```json
+// Wrong
+{
+  "name": "value",
+}
+
+// Right
+{
+  "name": "value"
+}
+```
+
+Escape quotes in strings:
+
+```json
+// Wrong
+{ "text": "Click "Submit"" }
+
+// Right
+{ "text": "Click \"Submit\"" }
+```
+
+</Accordion>
+
+<Accordion title="Schema validation errors">
+
+**Error Message:**
+
+```
+Invalid configuration: action is required
+```
+
+**Cause:** Config doesn't match the schema.
+
+**Solutions:**
+
+**Check required fields**
+
+Every step needs an `action` field:
+
+```json
+{ "action": "click", "text": "Button" }
+```
+
+**Validate**
+
+```bash
+npx webreel validate
+```
+
+**Check documentation**
+
+Refer to the [Actions Reference](/api/actions) for required fields for each action.
+
+</Accordion>
+
+## Verbose Mode
+
+Use verbose mode to debug issues:
+
+```bash
+npx webreel record --verbose
+```
+
+This outputs:
+
+- Each step as it executes: `[step 0] pause 500ms`
+- Element searches: `click text="Submit"`
+- Timing information
+- Error details with stack traces
+
+**Example output:**
+
+```
+Recording: my-demo
+[step 0] pause 500ms
+[step 1] click text="Get Started"
+[step 2] key "cmd+s"
+[step 3] pause 1000ms
+Done: videos/my-demo.mp4
+```
+
+If a step fails, you'll see exactly which one and why.
+
+## Preview Mode for Debugging
+
+Preview mode runs steps in a visible browser without recording:
+
+```bash
+npx webreel preview
+```
+
+Use this to:
+
+- Verify selectors work
+- Check timing and delays
+- See JavaScript errors in DevTools
+- Test steps interactively
+
+Preview is much faster than recording and lets you open DevTools to inspect the page state.
+
+## Dry Run Mode
+
+Print the resolved configuration without executing:
+
+```bash
+npx webreel record --dry-run
+```
+
+This shows:
+
+- All videos in the config
+- Resolved URLs and viewport sizes
+- All steps with descriptions
+- Inherited values from top-level config
+
+Use this to verify your config is structured correctly before recording.
+
+## File Path Issues
+
+<Accordion title="Local files not loading">
+
+**Problem:** `url: "./web/index.html"` fails to load.
+
+**Solutions:**
+
+**Check relative path**
+
+Paths are relative to the config file:
+
+```
+project/
+  webreel.config.json
+  web/
+    index.html
+```
+
+```json
+{ "url": "./web/index.html" }
+```
+
+**Use absolute file:// URLs**
+
+```json
+{ "url": "file:///Users/you/project/web/index.html" }
+```
+
+**Check file exists**
+
+```bash
+ls web/index.html
+```
+
+</Accordion>
+
+<Accordion title="Custom cursor SVG not loading">
+
+**Problem:** Custom cursor doesn't appear.
+
+**Solutions:**
+
+**Check file path**
+
+Path is relative to config file:
+
+```json
+{
+  "theme": {
+    "cursor": {
+      "image": "./cursor.svg"
+    }
+  }
+}
+```
+
+**Validate SVG syntax**
+
+Open the SVG in a browser to verify it's valid.
+
+**Check file permissions**
+
+```bash
+ls -l cursor.svg
+```
+
+</Accordion>
+
+## Getting Help
+
+If you're still stuck:
+
+1. **Check examples**: Browse the [examples directory](https://github.com/vercel-labs/webreel/tree/main/examples) for similar use cases
+2. **Search issues**: Look for similar problems in [GitHub Issues](https://github.com/vercel-labs/webreel/issues)
+3. **Run with verbose**: Always include verbose output when reporting issues
+4. **File an issue**: [Open a new issue](https://github.com/vercel-labs/webreel/issues/new) with:
+   - Your config file
+   - Verbose output
+   - Expected vs actual behavior
+   - Operating system and Node version
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="API Reference" icon="book" href="/api/actions">
+    Complete reference for all actions
+  </Card>
+  <Card title="Examples" icon="code" href="/examples/overview">
+    Browse working examples
+  </Card>
+  <Card title="Configuration" icon="gear" href="/config/overview">
+    Full configuration reference
+  </Card>
+</CardGroup>

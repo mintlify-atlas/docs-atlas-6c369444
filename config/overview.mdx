@@ -1,0 +1,216 @@
+---
+title: Configuration Overview
+description: Understanding the webreel.config.json structure and top-level options
+---
+
+## Configuration File Structure
+
+Webreel uses a `webreel.config.json` file to define video recordings. The config includes global defaults and a `videos` object mapping video names to their configurations.
+
+### JSON Schema Support
+
+Include a `$schema` field for IDE autocompletion and validation:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "my-video": {
+      "url": "https://example.com",
+      "steps": []
+    }
+  }
+}
+```
+
+## Top-Level Fields
+
+<ParamField path="$schema" type="string">
+  JSON Schema URL for IDE autocompletion. Use `https://webreel.dev/schema/v1.json`.
+</ParamField>
+
+<ParamField path="outDir" type="string" default="videos/">
+  Default output directory for all videos. Can be overridden per-video with the `output` field.
+</ParamField>
+
+<ParamField path="baseUrl" type="string" default="">
+  Prepended to relative video URLs. Useful for recording multiple pages on the same domain.
+
+  ```json
+  {
+    "baseUrl": "https://myapp.com",
+    "videos": {
+      "login": { "url": "/login", "steps": [] },
+      "dashboard": { "url": "/dashboard", "steps": [] }
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField path="viewport" type="object | string" default="{ width: 1080, height: 1080 }">
+  Default browser viewport dimensions. Accepts an object with `width` and `height`, or a preset name.
+
+  <Expandable title="Viewport Presets">
+    - `desktop` - 1920x1080
+    - `desktop-hd` - 2560x1440
+    - `laptop` - 1366x768
+    - `macbook-air` - 1440x900
+    - `macbook-pro` - 1512x982
+    - `ipad` - 1024x1366
+    - `ipad-pro` - 834x1194
+    - `ipad-mini` - 768x1024
+    - `iphone-15` - 393x852
+    - `iphone-15-pro-max` - 430x932
+    - `iphone-se` - 375x667
+    - `pixel-8` - 412x915
+    - `galaxy-s24` - 360x780
+  </Expandable>
+</ParamField>
+
+<ParamField path="theme" type="ThemeConfig">
+  Default cursor and HUD overlay customization. See [Theme Customization](/config/theme-customization).
+</ParamField>
+
+<ParamField path="sfx" type="SfxConfig">
+  Sound effects configuration for click and key events.
+
+  <Expandable title="SfxConfig Fields">
+    <ParamField path="click" type="1 | 2 | 3 | 4 | string" default="1">
+      Built-in click sound preset (1-4) or path to custom MP3 file.
+    </ParamField>
+
+    <ParamField path="key" type="1 | 2 | 3 | 4 | string" default="1">
+      Built-in key sound preset (1-4) or path to custom MP3 file.
+    </ParamField>
+  </Expandable>
+
+  ```json
+  {
+    "sfx": {
+      "click": 2,
+      "key": "./assets/mechanical-key.mp3"
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField path="include" type="string[]">
+  Array of paths to JSON files containing steps. These steps are prepended to all videos.
+
+  ```json
+  {
+    "include": ["./steps/dismiss-cookie-banner.json"],
+    "videos": {
+      "demo": {
+        "url": "https://example.com",
+        "steps": [
+          { "action": "click", "text": "Get Started" }
+        ]
+      }
+    }
+  }
+  ```
+
+  Example `steps/dismiss-cookie-banner.json`:
+
+  ```json
+  [
+    { "action": "wait", "selector": ".cookie-banner" },
+    { "action": "click", "text": "Accept" }
+  ]
+  ```
+</ParamField>
+
+<ParamField path="defaultDelay" type="number" default="undefined">
+  Default delay in milliseconds to wait after each step (except `pause`). Can be overridden per-video or per-step.
+</ParamField>
+
+<ParamField path="clickDwell" type="number" default="100">
+  Milliseconds to pause between mouse-down and mouse-up during clicks. Affects visual timing of click animations.
+</ParamField>
+
+<ParamField path="videos" type="object" required>
+  Object mapping video names to their configurations. See [Video Options](/config/video-options).
+
+  ```json
+  {
+    "videos": {
+      "hero-demo": {
+        "url": "https://example.com",
+        "steps": []
+      },
+      "feature-tour": {
+        "url": "https://example.com/features",
+        "steps": []
+      }
+    }
+  }
+  ```
+</ParamField>
+
+## Configuration Inheritance
+
+Per-video fields inherit from top-level defaults:
+
+- `baseUrl` - Videos use top-level `baseUrl` unless they define their own
+- `viewport` - Videos use top-level `viewport` unless they define their own
+- `theme` - Videos use top-level `theme` unless they define their own
+- `sfx` - Videos use top-level `sfx` unless they define their own
+- `defaultDelay` - Videos use top-level `defaultDelay` unless they define their own
+- `clickDwell` - Videos use top-level `clickDwell` unless they define their own
+- `include` - Videos use top-level `include` unless they define their own
+
+## Complete Example
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "outDir": "recordings/",
+  "baseUrl": "https://myapp.com",
+  "viewport": { "width": 1920, "height": 1080 },
+  "defaultDelay": 500,
+  "theme": {
+    "cursor": {
+      "size": 32,
+      "hotspot": "center"
+    },
+    "hud": {
+      "background": "rgba(0, 0, 0, 0.8)",
+      "fontSize": 48,
+      "position": "bottom"
+    }
+  },
+  "sfx": {
+    "click": 2,
+    "key": 3
+  },
+  "include": ["./steps/setup.json"],
+  "videos": {
+    "homepage": {
+      "url": "/",
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "click", "text": "Get Started", "delay": 1000 }
+      ]
+    },
+    "dashboard": {
+      "url": "/dashboard",
+      "viewport": { "width": 1366, "height": 768 },
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "click", "selector": ".profile-menu" }
+      ]
+    }
+  }
+}
+```
+
+## Creating a Config File
+
+Use the `init` command to scaffold a new config:
+
+```bash
+webreel init
+webreel init --name login-flow --url https://myapp.com/login
+webreel init --name hero -o hero.config.json
+```

@@ -1,0 +1,415 @@
+---
+title: Creating Your First Recording
+description: Step-by-step guide to creating browser recordings with webreel
+---
+
+This guide walks you through creating your first webreel recording from scratch, explaining the core concepts and workflow.
+
+## Quick Start
+
+The fastest way to get started is with the `init` command:
+
+```bash
+npx webreel init --name my-demo --url https://example.com
+```
+
+This creates a `webreel.config.json` file with a basic structure:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "my-demo": {
+      "url": "https://example.com",
+      "viewport": { "width": 1080, "height": 1080 },
+      "steps": []
+    }
+  }
+}
+```
+
+## Understanding the Config Structure
+
+### Top-Level Fields
+
+<table>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>`$schema`</td>
+      <td>string</td>
+      <td>JSON Schema URL for IDE autocompletion and validation</td>
+    </tr>
+    <tr>
+      <td>`outDir`</td>
+      <td>string</td>
+      <td>Output directory for videos (default: `videos/`)</td>
+    </tr>
+    <tr>
+      <td>`baseUrl`</td>
+      <td>string</td>
+      <td>Prepended to relative URLs in video configs</td>
+    </tr>
+    <tr>
+      <td>`viewport`</td>
+      <td>object</td>
+      <td>Default viewport dimensions for all videos</td>
+    </tr>
+    <tr>
+      <td>`defaultDelay`</td>
+      <td>number</td>
+      <td>Default delay (ms) after each step</td>
+    </tr>
+    <tr>
+      <td>`videos`</td>
+      <td>object</td>
+      <td>Object mapping video names to their configurations</td>
+    </tr>
+  </tbody>
+</table>
+
+### Video Configuration
+
+Each video in the `videos` object has these key fields:
+
+<table>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Required</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>`url`</td>
+      <td>Yes</td>
+      <td>The URL to record. Can be absolute (`https://...`), relative, or local file path (`./web/index.html`)</td>
+    </tr>
+    <tr>
+      <td>`viewport`</td>
+      <td>No</td>
+      <td>Browser viewport dimensions as `{"width": 1920, "height": 1080}`</td>
+    </tr>
+    <tr>
+      <td>`zoom`</td>
+      <td>No</td>
+      <td>CSS zoom level (e.g., `2` for 2x zoom, useful for higher quality output)</td>
+    </tr>
+    <tr>
+      <td>`waitFor`</td>
+      <td>No</td>
+      <td>CSS selector to wait for before starting recording</td>
+    </tr>
+    <tr>
+      <td>`steps`</td>
+      <td>Yes</td>
+      <td>Array of actions to perform during the recording</td>
+    </tr>
+  </tbody>
+</table>
+
+## Building Your First Recording
+
+<Steps>
+
+### Create the config file
+
+Start with a minimal configuration:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "hello-world": {
+      "url": "https://example.com",
+      "viewport": { "width": 1920, "height": 1080 },
+      "zoom": 2,
+      "waitFor": ".cta",
+      "steps": []
+    }
+  }
+}
+```
+
+### Add a pause step
+
+Start with a brief pause to let viewers see the initial state:
+
+```json
+"steps": [
+  { "action": "pause", "ms": 500 }
+]
+```
+
+### Add a click action
+
+Click a button or link using either a CSS selector or visible text:
+
+```json
+"steps": [
+  { "action": "pause", "ms": 500 },
+  { "action": "click", "selector": "a.cta", "delay": 1000 }
+]
+```
+
+The `delay` field adds a pause after the click completes.
+
+### Record the video
+
+Run the recording:
+
+```bash
+npx webreel record
+```
+
+Your video will be saved to `videos/hello-world.mp4`.
+
+</Steps>
+
+## The Recording Workflow
+
+Understanding how webreel processes your configuration helps you create better recordings:
+
+<Steps>
+
+### Page Load
+
+Webreel launches a headless Chrome instance and navigates to your specified URL.
+
+### Wait for Ready
+
+If you specified a `waitFor` selector, webreel waits up to 30 seconds for that element to appear before starting.
+
+### Cursor Initialization
+
+The cursor starts at a random position just outside the viewport edge (creating a natural entry motion).
+
+### Step Execution
+
+Each step in your `steps` array executes sequentially with realistic timing and cursor animation.
+
+### Frame Capture
+
+Screenshots are captured at 60fps during recording and encoded with ffmpeg.
+
+### Overlay Composition
+
+Cursor and keystroke HUD overlays are composited onto the final video.
+
+</Steps>
+
+## Common Step Types
+
+### Pause
+
+Wait for a specific duration:
+
+```json
+{ "action": "pause", "ms": 1200 }
+```
+
+### Click
+
+Click an element by selector or text:
+
+```json
+{ "action": "click", "selector": "button.primary" }
+{ "action": "click", "text": "Get Started" }
+```
+
+### Type
+
+Type text into a focused input:
+
+```json
+{
+  "action": "type",
+  "text": "user@example.com",
+  "selector": "#email",
+  "charDelay": 40
+}
+```
+
+### Key Press
+
+Press keyboard shortcuts:
+
+```json
+{ "action": "key", "key": "cmd+s" }
+{ "action": "key", "key": "Enter" }
+```
+
+## Tips for Getting Selectors
+
+<Accordion title="Using Browser DevTools">
+
+1. Open your target page in Chrome
+2. Right-click the element you want to interact with
+3. Select "Inspect"
+4. In the Elements panel, right-click the highlighted element
+5. Choose **Copy** → **Copy selector**
+
+This gives you a CSS selector you can use in your config.
+
+</Accordion>
+
+<Accordion title="Using Text Content">
+
+Instead of selectors, you can target elements by their visible text:
+
+```json
+{ "action": "click", "text": "Sign In" }
+```
+
+Webreel finds the smallest element containing that exact text. This is more resilient to markup changes.
+
+</Accordion>
+
+<Accordion title="Scoping with 'within'">
+
+When multiple elements match, narrow the search with `within`:
+
+```json
+{
+  "action": "click",
+  "text": "Delete",
+  "within": ".modal"
+}
+```
+
+This only searches within elements matching `.modal`.
+
+</Accordion>
+
+## Building Up Your Script Incrementally
+
+The most effective way to create complex recordings is to build them step by step:
+
+<Steps>
+
+### Start with navigation
+
+```json
+{
+  "steps": [
+    { "action": "pause", "ms": 500 }
+  ]
+}
+```
+
+Record this to verify the page loads correctly.
+
+### Add one interaction
+
+```json
+{
+  "steps": [
+    { "action": "pause", "ms": 500 },
+    { "action": "click", "selector": "#menu-button" }
+  ]
+}
+```
+
+Record and verify the click works.
+
+### Add the next step
+
+Continue adding steps one at a time, recording after each addition:
+
+```json
+{
+  "steps": [
+    { "action": "pause", "ms": 500 },
+    { "action": "click", "selector": "#menu-button" },
+    { "action": "click", "text": "Settings", "delay": 800 }
+  ]
+}
+```
+
+### Adjust timing
+
+Once all steps work, fine-tune delays for better pacing:
+
+```json
+{
+  "steps": [
+    { "action": "pause", "ms": 800 },
+    { "action": "click", "selector": "#menu-button", "delay": 400 },
+    { "action": "click", "text": "Settings", "delay": 1200 }
+  ]
+}
+```
+
+</Steps>
+
+## Preview Mode
+
+Use preview mode to test your steps in a visible browser without recording:
+
+```bash
+npx webreel preview
+```
+
+This is faster than recording and lets you debug selector issues interactively.
+
+## Watch Mode
+
+During development, use watch mode to automatically re-record when your config changes:
+
+```bash
+npx webreel record --watch
+```
+
+Edit your `webreel.config.json` and save, and webreel will immediately re-record your video.
+
+## Complete Example
+
+Here's a complete configuration from the hello-world example:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "hello-world": {
+      "url": "./web/index.html",
+      "viewport": { "width": 1920, "height": 1080 },
+      "zoom": 2,
+      "waitFor": ".cta",
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "click", "selector": "a.cta", "delay": 1000 }
+      ]
+    }
+  }
+}
+```
+
+Run with:
+
+```bash
+npx webreel record
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Cursor and Overlays" icon="arrow-pointer" href="/guides/cursor-and-overlays">
+    Customize cursor appearance and keystroke HUD
+  </Card>
+  <Card title="Output Formats" icon="film" href="/guides/output-formats">
+    Learn about MP4, GIF, and WebM output options
+  </Card>
+  <Card title="Advanced Actions" icon="wand-magic-sparkles" href="/guides/advanced-actions">
+    Master drag-and-drop, scrolling, and complex interactions
+  </Card>
+  <Card title="API Reference" icon="book" href="/api/actions">
+    Complete reference for all available actions
+  </Card>
+</CardGroup>

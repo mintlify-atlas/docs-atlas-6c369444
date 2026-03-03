@@ -1,0 +1,624 @@
+---
+title: Output Formats
+description: MP4, GIF, and WebM output options with quality and encoding settings
+---
+
+Webreel supports three output formats: MP4 (default), GIF, and WebM. Each has different use cases, quality characteristics, and file size tradeoffs.
+
+## Format Overview
+
+<table>
+  <thead>
+    <tr>
+      <th>Format</th>
+      <th>Extension</th>
+      <th>Best For</th>
+      <th>Browser Support</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>MP4</td>
+      <td>`.mp4`</td>
+      <td>High-quality demos, documentation, social media</td>
+      <td>Universal</td>
+    </tr>
+    <tr>
+      <td>GIF</td>
+      <td>`.gif`</td>
+      <td>GitHub READMEs, chat messages, email</td>
+      <td>Universal</td>
+    </tr>
+    <tr>
+      <td>WebM</td>
+      <td>`.webm`</td>
+      <td>Web embedding, smaller file sizes</td>
+      <td>Modern browsers (not Safari on older iOS/macOS)</td>
+    </tr>
+  </tbody>
+</table>
+
+## MP4 Format (Default)
+
+### Configuration
+
+MP4 is the default output format. Simply specify a video name:
+
+```json
+{
+  "videos": {
+    "my-demo": {
+      "url": "https://example.com",
+      "steps": []
+    }
+  }
+}
+```
+
+This produces `videos/my-demo.mp4`.
+
+### Explicit MP4 Output
+
+You can also specify the output path explicitly:
+
+```json
+{
+  "videos": {
+    "my-demo": {
+      "url": "https://example.com",
+      "output": "demos/feature-walkthrough.mp4",
+      "steps": []
+    }
+  }
+}
+```
+
+### Encoding Details
+
+MP4 files use H.264 (libx264) encoding with these settings:
+
+- **Codec**: libx264
+- **Preset**: ultrafast (during recording)
+- **Pixel format**: yuv420p (maximum compatibility)
+- **Color space**: bt709 (standard HD)
+- **Default CRF**: 18 (high quality)
+- **Frame rate**: 60fps (configurable)
+- **Audio codec**: AAC at 128kbps (when sound effects enabled)
+
+From the source (packages/@webreel/core/src/recorder.ts:97):
+
+```typescript
+this.ffmpegProcess = spawn(
+  this.ffmpegPath,
+  [
+    "-y",
+    "-f", "image2pipe",
+    "-framerate", String(this.fps),
+    "-c:v", "mjpeg",
+    "-i", "pipe:0",
+    "-c:v", "libx264",
+    "-preset", "ultrafast",
+    "-crf", String(this.crf),
+    "-pix_fmt", "yuv420p",
+    "-movflags", "+faststart",
+    this.tempVideo,
+  ],
+  { stdio: ["pipe", "pipe", "pipe"] },
+);
+```
+
+### Quality Settings
+
+Control output quality with the `quality` field (0-100):
+
+```json
+{
+  "videos": {
+    "high-quality-demo": {
+      "url": "https://example.com",
+      "quality": 95,
+      "steps": []
+    }
+  }
+}
+```
+
+Quality is converted to ffmpeg CRF (Constant Rate Factor):
+
+- `quality: 100` → CRF 0 (lossless, huge files)
+- `quality: 95` → CRF 2 (near-lossless)
+- `quality: 80` → CRF 10 (very high quality)
+- `quality: 50` → CRF 25 (balanced)
+- `quality: 0` → CRF 51 (lowest quality)
+
+Default CRF is 18 (excellent quality, reasonable file size).
+
+### Frame Rate
+
+Customize the frame rate:
+
+```json
+{
+  "videos": {
+    "smooth-demo": {
+      "url": "https://example.com",
+      "fps": 60,
+      "steps": []
+    }
+  }
+}
+```
+
+Higher frame rates produce smoother cursor motion but larger files. Default is 60fps.
+
+### Sound Effects
+
+Add click and keystroke sounds:
+
+```json
+{
+  "sfx": {
+    "click": 1,
+    "key": 1
+  },
+  "videos": {
+    "my-demo": {
+      "url": "https://example.com",
+      "steps": []
+    }
+  }
+}
+```
+
+Built-in sound packs:
+
+- `1`: Soft, subtle clicks and key presses
+- `2`: Mechanical keyboard sounds
+- `3`: Clicky, pronounced sounds
+- `4`: Deep, bass-heavy sounds
+
+You can also provide custom audio file paths:
+
+```json
+{
+  "sfx": {
+    "click": "./sounds/custom-click.mp3",
+    "key": "./sounds/custom-key.mp3"
+  }
+}
+```
+
+### File Size Considerations
+
+<table>
+  <thead>
+    <tr>
+      <th>Setting</th>
+      <th>Small File</th>
+      <th>Balanced</th>
+      <th>High Quality</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Quality</td>
+      <td>50</td>
+      <td>75</td>
+      <td>95</td>
+    </tr>
+    <tr>
+      <td>FPS</td>
+      <td>30</td>
+      <td>60</td>
+      <td>60</td>
+    </tr>
+    <tr>
+      <td>Viewport</td>
+      <td>1080x1080</td>
+      <td>1920x1080</td>
+      <td>2560x1440</td>
+    </tr>
+    <tr>
+      <td>Zoom</td>
+      <td>1</td>
+      <td>1.5</td>
+      <td>2</td>
+    </tr>
+  </tbody>
+</table>
+
+## GIF Format
+
+### Configuration
+
+Set the `output` field to a `.gif` extension:
+
+```json
+{
+  "videos": {
+    "readme-demo": {
+      "url": "https://example.com",
+      "output": "readme-demo.gif",
+      "steps": []
+    }
+  }
+}
+```
+
+From the gif-output example:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "gif-output": {
+      "url": "./web/index.html",
+      "viewport": { "width": 1920, "height": 1080 },
+      "zoom": 2,
+      "output": "gif-output.gif",
+      "waitFor": ".primary",
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "click", "selector": "a.primary", "delay": 1000 }
+      ]
+    }
+  }
+}
+```
+
+### Encoding Details
+
+GIF encoding uses ffmpeg's palettegen/paletteuse filters for optimal quality:
+
+- **Frame rate**: Fixed at 15fps (GIF standard)
+- **Palette**: Generated from video content (256 colors)
+- **Dithering**: Enabled for smoother gradients
+- **Scaling**: Uses Lanczos algorithm for quality
+
+From the source (packages/@webreel/core/src/media.ts:226):
+
+```typescript
+export function finalizeGif(
+  ffmpegPath: string,
+  tempVideo: string,
+  outputPath: string,
+  width: number,
+): void {
+  runFfmpeg(ffmpegPath, [
+    "-y",
+    "-i",
+    tempVideo,
+    "-vf",
+    `fps=15,scale=${width}:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse`,
+    outputPath,
+  ]);
+}
+```
+
+### Use Cases
+
+**Best for:**
+
+- GitHub README demonstrations
+- Slack/Discord messages
+- Email campaigns
+- Blog posts (works everywhere)
+- Quick previews
+
+**Not ideal for:**
+
+- Long recordings (file size explodes)
+- High-quality demos (limited to 256 colors)
+- Videos with smooth gradients or photos
+- Complex animations
+
+### Limitations
+
+- **No sound**: GIF format doesn't support audio
+- **Lower frame rate**: Fixed at 15fps vs 60fps for MP4
+- **Color limitations**: 256 colors per frame
+- **File size**: Can be larger than equivalent MP4 for long videos
+- **No quality control**: GIF encoding quality is fixed
+
+### Optimization Tips
+
+<Accordion title="Keep it short">
+
+GIFs grow quickly with duration. Aim for:
+
+- Under 5 seconds: Excellent
+- 5-10 seconds: Good
+- 10-20 seconds: File size may be large
+- Over 20 seconds: Consider MP4 instead
+
+</Accordion>
+
+<Accordion title="Use smaller viewports">
+
+GIF file size is directly proportional to pixel count:
+
+```json
+{
+  "videos": {
+    "compact-gif": {
+      "url": "https://example.com",
+      "viewport": { "width": 1080, "height": 720 },
+      "output": "demo.gif",
+      "steps": []
+    }
+  }
+}
+```
+
+</Accordion>
+
+<Accordion title="Avoid complex gradients">
+
+The 256-color palette struggles with:
+
+- Smooth gradients
+- Photographs
+- Subtle shadows
+- Color-rich interfaces
+
+Flat design and high-contrast interfaces work best.
+
+</Accordion>
+
+## WebM Format
+
+### Configuration
+
+Set the `output` field to a `.webm` extension:
+
+```json
+{
+  "videos": {
+    "web-demo": {
+      "url": "https://example.com",
+      "output": "web-demo.webm",
+      "steps": []
+    }
+  }
+}
+```
+
+From the webm-output example:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "webm-output": {
+      "url": "./web/index.html",
+      "viewport": { "width": 1920, "height": 1080 },
+      "zoom": 2,
+      "output": "webm-output.webm",
+      "waitFor": ".dashboard",
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "click", "selector": ".menu-item", "delay": 1000 }
+      ]
+    }
+  }
+}
+```
+
+### Encoding Details
+
+WebM files use VP9 encoding:
+
+- **Video codec**: libvpx-vp9
+- **CRF**: 30 (good quality, smaller files)
+- **Bitrate**: Variable (VBR, b:v 0)
+- **Pixel format**: yuv420p
+- **Audio codec**: Opus at 128kbps (when sound effects enabled)
+
+From the source (packages/@webreel/core/src/media.ts:157):
+
+```typescript
+runFfmpeg(ffmpegPath, [
+  "-y",
+  "-i",
+  tempVideo,
+  "-c:v",
+  "libvpx-vp9",
+  "-crf",
+  "30",
+  "-b:v",
+  "0",
+  "-pix_fmt",
+  "yuv420p",
+  silentWebm,
+]);
+```
+
+### Use Cases
+
+**Best for:**
+
+- Web documentation sites
+- Embedded video players
+- Smaller file sizes than MP4
+- Modern web applications
+
+**Not ideal for:**
+
+- Social media (MP4 has better support)
+- Maximum compatibility (Safari support is limited on older versions)
+- iOS apps
+
+### Browser Support
+
+<table>
+  <thead>
+    <tr>
+      <th>Browser</th>
+      <th>Support</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Chrome</td>
+      <td>Full support</td>
+    </tr>
+    <tr>
+      <td>Firefox</td>
+      <td>Full support</td>
+    </tr>
+    <tr>
+      <td>Edge</td>
+      <td>Full support</td>
+    </tr>
+    <tr>
+      <td>Safari (macOS 14.1+)</td>
+      <td>Full support</td>
+    </tr>
+    <tr>
+      <td>Safari (older)</td>
+      <td>Limited or no support</td>
+    </tr>
+    <tr>
+      <td>iOS Safari (17.1+)</td>
+      <td>Full support</td>
+    </tr>
+    <tr>
+      <td>iOS Safari (older)</td>
+      <td>Limited or no support</td>
+    </tr>
+  </tbody>
+</table>
+
+### File Size Comparison
+
+For a typical 10-second demo at 1920x1080:
+
+- **MP4 (CRF 18)**: ~5-8 MB
+- **WebM (CRF 30)**: ~3-5 MB
+- **GIF (15fps)**: ~8-15 MB
+
+WebM generally produces the smallest files while maintaining good quality.
+
+## Format Selection Guide
+
+<Tabs>
+  <Tab title="Use MP4 when...">
+    - You need universal compatibility
+    - Posting to social media (Twitter, LinkedIn, etc.)
+    - Creating high-quality demos
+    - You want sound effects
+    - Maximum quality is important
+    - You're unsure (it's the safest default)
+  </Tab>
+  
+  <Tab title="Use GIF when...">
+    - Embedding in GitHub READMEs
+    - Sharing in chat (Slack, Discord)
+    - Including in emails
+    - The recording is short (under 10 seconds)
+    - You need it to autoplay everywhere
+    - File format support is uncertain
+  </Tab>
+  
+  <Tab title="Use WebM when...">
+    - Building web documentation
+    - File size is critical
+    - You're only targeting modern browsers
+    - Your users are on desktop (not mobile Safari)
+    - You need good quality at smaller sizes
+  </Tab>
+</Tabs>
+
+## Multiple Formats from One Recording
+
+You can generate multiple formats by defining separate video entries:
+
+```json
+{
+  "videos": {
+    "demo-mp4": {
+      "url": "https://example.com",
+      "output": "demo.mp4",
+      "include": ["./steps/demo-steps.json"],
+      "steps": []
+    },
+    "demo-gif": {
+      "url": "https://example.com",
+      "output": "demo.gif",
+      "include": ["./steps/demo-steps.json"],
+      "steps": []
+    }
+  }
+}
+```
+
+Create `steps/demo-steps.json`:
+
+```json
+[
+  { "action": "pause", "ms": 500 },
+  { "action": "click", "text": "Get Started" }
+]
+```
+
+This records the same steps twice, producing both `demo.mp4` and `demo.gif`.
+
+## Thumbnails
+
+All formats automatically generate a PNG thumbnail from the first frame:
+
+```bash
+videos/
+  my-demo.mp4
+  my-demo.png      # Thumbnail
+```
+
+### Custom Thumbnail Time
+
+Extract the thumbnail from a specific timestamp:
+
+```json
+{
+  "videos": {
+    "my-demo": {
+      "url": "https://example.com",
+      "thumbnail": {
+        "time": 2.5
+      },
+      "steps": []
+    }
+  }
+}
+```
+
+This captures the frame at 2.5 seconds.
+
+### Disable Thumbnails
+
+```json
+{
+  "videos": {
+    "my-demo": {
+      "url": "https://example.com",
+      "thumbnail": {
+        "enabled": false
+      },
+      "steps": []
+    }
+  }
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Advanced Actions" icon="wand-magic-sparkles" href="/guides/advanced-actions">
+    Learn drag-and-drop, scrolling, and complex interactions
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/guides/troubleshooting">
+    Common issues and solutions
+  </Card>
+  <Card title="Configuration Reference" icon="gear" href="/config/overview">
+    Complete configuration options
+  </Card>
+</CardGroup>

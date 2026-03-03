@@ -1,0 +1,160 @@
+---
+title: WebM Output
+description: Export recordings as WebM videos with VP9 encoding
+---
+
+The webm-output example demonstrates how to export recordings as WebM videos using VP9 encoding, an alternative to MP4 format.
+
+## Configuration
+
+Here's the complete `webreel.config.json` for this example:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "webm-output": {
+      "url": "./web/index.html",
+      "viewport": { "width": 1920, "height": 1080 },
+      "zoom": 2,
+      "output": "webm-output.webm",
+      "waitFor": ".chart",
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "click", "text": "View All Reports", "delay": 1000 }
+      ]
+    }
+  }
+}
+```
+
+## What It Demonstrates
+
+### WebM Output Format
+
+Set the output filename with a `.webm` extension:
+
+```json
+"output": "webm-output.webm"
+```
+
+Webreel automatically detects the extension and encodes the recording as WebM with VP9 video codec.
+
+### Output Location
+
+The WebM file is saved to the `videos/` directory:
+
+```
+videos/
+  webm-output.webm
+```
+
+You can specify a custom path:
+
+```json
+"output": "demos/dashboard.webm"
+```
+
+### WebM Encoding Details
+
+Webreel uses VP9 encoding with these settings:
+
+- **Codec**: VP9 (royalty-free, open standard)
+- **Frame Rate**: 60fps (same as MP4)
+- **Quality**: High-quality encoding optimized for screen recordings
+- **File Size**: Typically 10-20% smaller than MP4
+- **Browser Support**: Chrome, Firefox, Edge (Safari 14.1+)
+
+### WebM vs MP4
+
+**WebM Advantages:**
+- Slightly smaller file sizes
+- Open standard (no licensing concerns)
+- Better compression efficiency
+- Native browser support in Chrome and Firefox
+
+**MP4 Advantages:**
+- Universal compatibility (works everywhere)
+- Better Safari and iOS support
+- Standard for social media platforms
+- Hardware acceleration on more devices
+
+### When to Use WebM
+
+Use WebM when:
+
+- File size is critical (hosting many videos)
+- Targeting modern browsers only
+- Building web applications with HTML5 `<video>`
+- You want an open-source alternative to MP4
+- Embedding in documentation sites (Chrome/Firefox users)
+
+### When to Use MP4
+
+Use MP4 when:
+
+- You need maximum compatibility
+- Targeting mobile devices (especially iOS)
+- Posting to social media platforms
+- Supporting older browsers
+- Users may download and play locally
+
+### Browser Compatibility
+
+WebM (VP9) support:
+
+- Chrome: Full support
+- Firefox: Full support
+- Edge: Full support
+- Safari: 14.1+ (macOS Big Sur, iOS 14.5+)
+- Mobile: Android Chrome (full), iOS Safari (14.5+)
+
+### Embedding WebM
+
+In HTML with MP4 fallback:
+
+```html
+<video controls>
+  <source src="demo.webm" type="video/webm">
+  <source src="demo.mp4" type="video/mp4">
+  Your browser doesn't support video.
+</video>
+```
+
+The browser will use WebM if supported, falling back to MP4.
+
+### File Size Comparison
+
+Typical file sizes for the same 10-second recording:
+
+- MP4 (H.264): ~800 KB
+- WebM (VP9): ~650 KB
+- GIF: ~8 MB
+
+WebM provides the best compression while maintaining video quality.
+
+### Quality Settings
+
+WebM uses the same `zoom` setting as MP4:
+
+```json
+"viewport": { "width": 1920, "height": 1080 },
+"zoom": 2
+```
+
+This produces a 3840 × 2160 output, perfect for Retina displays.
+
+## Running the Example
+
+```bash
+cd examples/webm-output
+webreel record
+```
+
+The output WebM will be saved to `videos/webm-output.webm`.
+
+## Next Steps
+
+- [GIF Output](/examples/gif-output) - Export as animated GIF
+- [Screenshots](/examples/screenshots) - Capture static PNGs
+- [Hello World](/examples/hello-world) - Default MP4 output

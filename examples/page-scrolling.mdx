@@ -1,0 +1,113 @@
+---
+title: Page Scrolling
+description: Scroll the page and specific container elements
+---
+
+The page-scrolling example demonstrates how to scroll the viewport and scroll within specific container elements using a blog post layout.
+
+## Configuration
+
+Here's the complete `webreel.config.json` for this example:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "page-scrolling": {
+      "url": "./web/index.html",
+      "viewport": { "width": 1920, "height": 1080 },
+      "zoom": 2,
+      "waitFor": "main",
+      "defaultDelay": 600,
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "scroll", "y": 400 },
+        { "action": "scroll", "y": 400 },
+        { "action": "scroll", "y": -300 },
+        { "action": "scroll", "y": 200, "selector": ".sidebar", "delay": 1000 }
+      ]
+    }
+  }
+}
+```
+
+## What It Demonstrates
+
+### Scroll Action
+
+The `scroll` action scrolls vertically by a specified number of pixels:
+
+```json
+{ "action": "scroll", "y": 400 }
+```
+
+- `y`: Pixels to scroll (positive = down, negative = up)
+- `selector` (optional): Scroll a specific element instead of the whole page
+
+### Full-Page Scrolling
+
+Without a `selector`, the scroll action affects the entire page:
+
+```json
+{ "action": "scroll", "y": 400 },
+{ "action": "scroll", "y": 400 }
+```
+
+These two steps scroll down 800 pixels total, revealing content below the fold.
+
+### Scrolling Up
+
+Negative `y` values scroll back up:
+
+```json
+{ "action": "scroll", "y": -300 }
+```
+
+This scrolls up 300 pixels, returning to a section that was just passed.
+
+### Container Scrolling
+
+The `selector` field scrolls a specific element with `overflow: auto` or `overflow: scroll`:
+
+```json
+{ "action": "scroll", "y": 200, "selector": ".sidebar", "delay": 1000 }
+```
+
+This scrolls the `.sidebar` element independently of the main page scroll. This is useful for:
+- Scrollable sidebars
+- Modal dialogs with overflow content
+- Embedded lists or tables
+- Code blocks with horizontal scroll
+
+### Smooth Scrolling Animation
+
+Webreel automatically animates scroll actions with smooth easing, creating a natural scrolling experience rather than instant jumps.
+
+### Pacing with Delays
+
+The `defaultDelay` of 600ms between scrolls gives viewers time to scan the content:
+
+```json
+"defaultDelay": 600
+```
+
+The sidebar scroll has an extended 1000ms delay to emphasize the interaction:
+
+```json
+{ "action": "scroll", "y": 200, "selector": ".sidebar", "delay": 1000 }
+```
+
+## Running the Example
+
+```bash
+cd examples/page-scrolling
+webreel record
+```
+
+The output video will be saved to `videos/page-scrolling.mp4`.
+
+## Next Steps
+
+- [Drag and Drop](/examples/drag-and-drop) - Learn about drag interactions
+- [Form Filling](/examples/form-filling) - Type into form fields
+- [Mobile Viewport](/examples/mobile-viewport) - Record at mobile dimensions

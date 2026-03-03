@@ -1,80 +1,181 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Record your first browser video with webreel in under 5 minutes"
 ---
 
 ## Get started in three steps
 
-Get your documentation site running locally and make your first customization.
+This guide walks you through creating and recording your first webreel video.
 
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+<Steps>
+  <Step title="Install webreel">
+    Install webreel using npm, yarn, or pnpm:
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+    <CodeGroup>
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+    ```bash npm
+    npm install webreel
+    ```
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    ```bash yarn
+    yarn add webreel
+    ```
+    
+    ```bash pnpm
+    pnpm add webreel
+    ```
+    
+    </CodeGroup>
+    
+    <Info>
+      Need Node.js 18 or higher? See the [installation guide](/installation) for system requirements.
+    </Info>
+  </Step>
+  
+  <Step title="Create a config file">
+    Initialize a new webreel config file:
+    
+    ```bash
+    npx webreel init --name my-first-video --url https://example.com
+    ```
+    
+    This creates a `webreel.config.json` file with a basic configuration:
+    
+    ```json webreel.config.json
+    {
+      "$schema": "https://webreel.dev/schema/v1.json",
+      "videos": {
+        "my-first-video": {
+          "url": "https://example.com",
+          "viewport": { "width": 1080, "height": 1080 },
+          "defaultDelay": 500,
+          "steps": [
+            { "action": "pause", "ms": 500 },
+            { "action": "click", "text": "Get Started" },
+            { "action": "key", "key": "cmd+a", "delay": 1000 }
+          ]
+        }
+      }
+    }
+    ```
+    
+    <Tip>
+      The `$schema` field enables autocompletion in VS Code and other editors that support JSON schemas.
+    </Tip>
+  </Step>
+  
+  <Step title="Record your video">
+    Run the record command to generate your video:
+    
+    ```bash
+    npx webreel record
+    ```
+    
+    <Note>
+      The first run will download Chrome and ffmpeg automatically (approximately 200MB total). This one-time download may take a few minutes.
+    </Note>
+    
+    webreel will:
+    1. Launch a headless Chrome browser
+    2. Navigate to the specified URL
+    3. Execute each step in sequence
+    4. Capture screenshots at approximately 60fps
+    5. Encode the final video with ffmpeg
+    
+    Your video will be saved to `videos/my-first-video.mp4`.
+  </Step>
+</Steps>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+## Complete example: Login form
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+Here's a more realistic example that demonstrates typing into form fields:
 
-### Step 3: Go live
+```json webreel.config.json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "form-filling": {
+      "url": "https://yourapp.com/login",
+      "viewport": { "width": 1920, "height": 1080 },
+      "defaultDelay": 300,
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        {
+          "action": "type",
+          "text": "user@example.com",
+          "selector": "#email",
+          "charDelay": 40
+        },
+        {
+          "action": "type",
+          "text": "supersecret123",
+          "selector": "#password",
+          "charDelay": 30,
+          "delay": 500
+        },
+        { "action": "click", "text": "Sign In" },
+        { "action": "pause", "ms": 2500 }
+      ]
+    }
+  }
+}
+```
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+This config:
+- Opens your login page at a 1920x1080 viewport
+- Types an email address into the `#email` field with realistic character delay
+- Types a password into the `#password` field
+- Clicks the "Sign In" button
+- Waits 2.5 seconds to show the result
+
+## Preview before recording
+
+Test your config in a visible browser window without recording:
+
+```bash
+npx webreel preview
+```
+
+This is helpful for:
+- Debugging selector issues
+- Timing your steps correctly
+- Verifying animations and transitions
+
+<Tip>
+  Use `webreel preview --verbose` to see detailed logs of each step as it executes.
+</Tip>
+
+## Expected output
+
+After recording completes, you'll see:
+
+```bash
+✓ Recording complete: videos/my-first-video.mp4
+✓ Thumbnail generated: videos/my-first-video.jpg
+```
+
+Your `videos/` directory will contain:
+- `my-first-video.mp4`: The final encoded video
+- `my-first-video.jpg`: A thumbnail image (by default from the first frame)
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
+Now that you've recorded your first video, explore more features:
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="CLI commands" icon="terminal" href="/commands/record">
+    Learn about all available commands including watch mode and validation
+  </Card>
+  
+  <Card title="Configuration" icon="gear" href="/config/overview">
+    Explore all config options, actions, and advanced features
+  </Card>
+  
+  <Card title="Actions reference" icon="hand-pointer" href="/config/actions">
+    Complete reference for all available actions (click, type, scroll, drag)
+  </Card>
+  
+  <Card title="Examples" icon="stars" href="/examples/overview">
+    Browse example configs for common use cases
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

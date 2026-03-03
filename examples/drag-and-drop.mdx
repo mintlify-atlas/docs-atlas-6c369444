@@ -1,0 +1,107 @@
+---
+title: Drag and Drop
+description: Drag elements between positions on a kanban board
+---
+
+The drag-and-drop example demonstrates how to simulate drag-and-drop interactions, showcasing tasks being moved between columns on a kanban board.
+
+## Configuration
+
+Here's the complete `webreel.config.json` for this example:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "drag-and-drop": {
+      "url": "./web/index.html",
+      "viewport": { "width": 1920, "height": 1080 },
+      "zoom": 2,
+      "waitFor": ".board",
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "moveTo", "text": "Write unit tests", "delay": 400 },
+        {
+          "action": "drag",
+          "from": { "text": "Write unit tests", "within": ".column-todo" },
+          "to": { "selector": ".card-list", "within": ".column-in-progress" },
+          "delay": 600
+        },
+        {
+          "action": "drag",
+          "from": { "text": "Build API endpoints", "within": ".column-in-progress" },
+          "to": { "selector": ".card-list", "within": ".column-done" },
+          "delay": 1000
+        }
+      ]
+    }
+  }
+}
+```
+
+## What It Demonstrates
+
+### Drag Action
+
+The `drag` action simulates drag-and-drop with smooth cursor movement:
+
+```json
+{
+  "action": "drag",
+  "from": { "text": "Write unit tests", "within": ".column-todo" },
+  "to": { "selector": ".card-list", "within": ".column-in-progress" },
+  "delay": 600
+}
+```
+
+- `from`: The element to drag (supports `text`, `selector`, or `position`)
+- `to`: The drop target
+- `delay`: Pause after completing the drag
+
+### Scoped Targeting with Within
+
+The `within` field scopes the search to a specific container:
+
+```json
+"from": { "text": "Write unit tests", "within": ".column-todo" }
+```
+
+This is crucial when multiple elements have the same text. Here, "Write unit tests" only matches within the `.column-todo` element, avoiding ambiguity.
+
+### Move To Action
+
+Before dragging, the cursor moves to hover over the element:
+
+```json
+{ "action": "moveTo", "text": "Write unit tests", "delay": 400 }
+```
+
+This creates a more natural interaction by showing the user considering which task to drag before actually dragging it.
+
+### Animated Cursor Movement
+
+Webreel automatically animates the cursor during drag operations, creating smooth movement from the source to the destination. The cursor path is calculated to feel natural and human-like.
+
+### Multiple Drags
+
+The example demonstrates two consecutive drag operations:
+
+1. Move "Write unit tests" from Todo to In Progress
+2. Move "Build API endpoints" from In Progress to Done
+
+Each drag has its own delay, giving viewers time to process the state change.
+
+## Running the Example
+
+```bash
+cd examples/drag-and-drop
+webreel record
+```
+
+The output video will be saved to `videos/drag-and-drop.mp4`.
+
+## Next Steps
+
+- [Form Filling](/examples/form-filling) - Learn about typing interactions
+- [Page Scrolling](/examples/page-scrolling) - Scroll the page and containers
+- [Custom Theme](/examples/custom-theme) - Customize the cursor appearance

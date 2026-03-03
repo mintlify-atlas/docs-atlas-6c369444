@@ -1,0 +1,148 @@
+---
+title: Screenshots
+description: Capture PNG screenshots at specific points during recording
+---
+
+The screenshots example demonstrates how to capture static PNG images at specific points during a recording, useful for generating marketing assets or documentation images.
+
+## Configuration
+
+Here's the complete `webreel.config.json` for this example:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "screenshots": {
+      "url": "./web/index.html",
+      "viewport": { "width": 1920, "height": 1080 },
+      "zoom": 2,
+      "waitFor": ".hero",
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "screenshot", "output": "hero.png" },
+        { "action": "click", "text": "Features", "delay": 800 },
+        { "action": "screenshot", "output": "after-click.png" },
+        { "action": "scroll", "y": 400, "delay": 500 },
+        { "action": "screenshot", "output": "features.png", "delay": 500 }
+      ]
+    }
+  }
+}
+```
+
+## What It Demonstrates
+
+### Screenshot Action
+
+The `screenshot` action captures the current page state as a PNG:
+
+```json
+{ "action": "screenshot", "output": "hero.png" }
+```
+
+- `output`: Filename for the screenshot (saved in the working directory)
+- `delay` (optional): Pause after taking the screenshot
+
+Screenshots include cursor overlays and HUD elements, just like the video.
+
+### Multiple Screenshots
+
+You can capture multiple screenshots throughout a recording:
+
+```json
+{ "action": "screenshot", "output": "hero.png" },
+{ "action": "click", "text": "Features" },
+{ "action": "screenshot", "output": "after-click.png" },
+{ "action": "scroll", "y": 400 },
+{ "action": "screenshot", "output": "features.png" }
+```
+
+This example captures three states:
+1. Initial hero section
+2. After clicking "Features"
+3. After scrolling to the features section
+
+### Combining Screenshots with Interactions
+
+Screenshots work seamlessly with all other actions:
+
+- **Click**: Capture before and after click states
+  ```json
+  { "action": "click", "text": "Features" },
+  { "action": "screenshot", "output": "after-click.png" }
+  ```
+
+- **Scroll**: Capture different viewport positions
+  ```json
+  { "action": "scroll", "y": 400 },
+  { "action": "screenshot", "output": "scrolled.png" }
+  ```
+
+- **Type**: Capture form states
+  ```json
+  { "action": "type", "text": "user@example.com", "selector": "#email" },
+  { "action": "screenshot", "output": "form-filled.png" }
+  ```
+
+### Screenshot Output Location
+
+Screenshots are saved in the current working directory by default. You can specify paths:
+
+```json
+{ "action": "screenshot", "output": "screenshots/hero.png" }
+```
+
+Make sure the directory exists before recording.
+
+### High-Resolution Output
+
+The `zoom: 2` setting applies to screenshots too:
+
+```json
+"viewport": { "width": 1920, "height": 1080 },
+"zoom": 2
+```
+
+This produces 3840 × 2160 screenshots, perfect for Retina displays.
+
+### Use Cases
+
+Screenshots are ideal for:
+
+- Documentation images for guides and tutorials
+- Marketing assets showing product features
+- Social media preview images
+- Before/after comparisons
+- Error state captures for bug reports
+
+### Screenshots and Videos Together
+
+A single recording can produce both a video and multiple screenshots:
+
+```bash
+webreel record
+```
+
+Outputs:
+- `videos/screenshots.mp4` (the full video)
+- `hero.png` (screenshot 1)
+- `after-click.png` (screenshot 2)
+- `features.png` (screenshot 3)
+
+## Running the Example
+
+```bash
+cd examples/screenshots
+webreel record
+```
+
+This generates:
+- Video: `videos/screenshots.mp4`
+- Screenshots: `hero.png`, `after-click.png`, `features.png`
+
+## Next Steps
+
+- [GIF Output](/examples/gif-output) - Export as animated GIF
+- [WebM Output](/examples/webm-output) - Export as WebM video
+- [Custom Theme](/examples/custom-theme) - Customize screenshot appearance

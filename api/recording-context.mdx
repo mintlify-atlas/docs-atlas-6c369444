@@ -1,0 +1,277 @@
+---
+title: 'RecordingContext'
+description: 'Manage recording state and cursor position during browser interactions'
+---
+
+The `RecordingContext` class tracks the state of a recording session, including cursor position, recording mode, and timeline integration.
+
+## Constructor
+
+```typescript
+const ctx = new RecordingContext()
+```
+
+Creates a new recording context with default settings.
+
+## Properties
+
+### mode
+
+The current recording mode.
+
+```typescript
+ctx.mode // 'record' | 'preview'
+```
+
+<ResponseField name="mode" type="'record' | 'preview'">
+  - `'record'` - Timeline-based recording with cursor tracking
+  - `'preview'` - Real-time overlay rendering without timeline
+</ResponseField>
+
+### timeline
+
+The attached interaction timeline.
+
+```typescript
+ctx.timeline // InteractionTimeline | null
+```
+
+<ResponseField name="timeline" type="InteractionTimeline | null">
+  Timeline instance for tracking cursor movements and events
+</ResponseField>
+
+### cursorX
+
+Current horizontal cursor position in pixels.
+
+```typescript
+ctx.cursorX // number
+```
+
+### cursorY
+
+Current vertical cursor position in pixels.
+
+```typescript
+ctx.cursorY // number
+```
+
+### isRecording
+
+Whether the context is actively recording to a timeline.
+
+```typescript
+ctx.isRecording // boolean
+```
+
+Returns `true` when mode is `'record'` and a timeline is set.
+
+## Methods
+
+### setMode()
+
+Set the recording mode.
+
+```typescript
+ctx.setMode(mode)
+```
+
+<ParamField path="mode" type="'record' | 'preview'" required>
+  Recording mode to use
+</ParamField>
+
+### setTimeline()
+
+Attach or detach an interaction timeline.
+
+```typescript
+ctx.setTimeline(timeline)
+```
+
+<ParamField path="timeline" type="InteractionTimeline | null" required>
+  Timeline to attach, or null to detach
+</ParamField>
+
+### setRecorder()
+
+Attach or detach a recorder instance.
+
+```typescript
+ctx.setRecorder(recorder)
+```
+
+<ParamField path="recorder" type="{ addEvent: (type: 'click' | 'key') => void } | null" required>
+  Recorder instance to attach, or null to detach
+</ParamField>
+
+### setCursorPosition()
+
+Update the cursor position.
+
+```typescript
+ctx.setCursorPosition(x, y)
+```
+
+<ParamField path="x" type="number" required>
+  Horizontal position in pixels
+</ParamField>
+
+<ParamField path="y" type="number" required>
+  Vertical position in pixels
+</ParamField>
+
+### getCursorPosition()
+
+Get the current cursor position.
+
+```typescript
+const pos = ctx.getCursorPosition()
+```
+
+<ResponseField name="pos" type="{ x: number; y: number }">
+  Current cursor coordinates
+</ResponseField>
+
+### resetCursorPosition()
+
+Reset cursor to a random position along the viewport edge.
+
+```typescript
+ctx.resetCursorPosition(cssWidth?, cssHeight?)
+```
+
+<ParamField path="cssWidth" type="number" default="1080">
+  Viewport width in pixels
+</ParamField>
+
+<ParamField path="cssHeight" type="number" default="1080">
+  Viewport height in pixels
+</ParamField>
+
+Useful for starting recordings with the cursor off-screen.
+
+### setClickDwell()
+
+Set the dwell time before clicks.
+
+```typescript
+ctx.setClickDwell(ms)
+```
+
+<ParamField path="ms" type="number | undefined" required>
+  Dwell time in milliseconds, or undefined for random (80-180ms)
+</ParamField>
+
+### getClickDwellMs()
+
+Get the current click dwell time.
+
+```typescript
+const dwell = ctx.getClickDwellMs()
+```
+
+<ResponseField name="dwell" type="number">
+  Dwell time in milliseconds
+</ResponseField>
+
+### markEvent()
+
+Record an interaction event.
+
+```typescript
+ctx.markEvent(type)
+```
+
+<ParamField path="type" type="'click' | 'key'" required>
+  Type of interaction event
+</ParamField>
+
+This method:
+- Adds the event to the timeline if recording
+- Notifies the attached recorder for sound effects
+
+## Usage Example
+
+### Preview Mode
+
+For real-time overlay rendering during recording:
+
+```typescript
+import { Recorder, RecordingContext, clickAt } from '@webreel/core';
+
+const ctx = new RecordingContext();
+ctx.setMode('preview');
+
+const recorder = new Recorder(1920, 1080);
+await recorder.start(client, './output.mp4', ctx);
+
+// Action functions use the context
+await clickAt(ctx, client, 500, 300);
+
+await recorder.stop();
+```
+
+In preview mode, cursor and HUD overlays are injected directly into the page using JavaScript.
+
+### Record Mode
+
+For timeline-based recording with separate composition:
+
+```typescript
+import { 
+  Recorder, 
+  RecordingContext, 
+  InteractionTimeline,
+  clickAt 
+} from '@webreel/core';
+
+const timeline = new InteractionTimeline(1920, 1080);
+const ctx = new RecordingContext();
+
+ctx.setMode('record');
+ctx.setTimeline(timeline);
+
+const recorder = new Recorder(1920, 1080);
+recorder.setTimeline(timeline);
+
+await recorder.start(client, './clean.mp4', ctx);
+
+// Cursor movements are tracked in timeline
+await clickAt(ctx, client, 500, 300);
+
+await recorder.stop();
+
+// Timeline contains all cursor/HUD data
+timeline.save('./timeline.json');
+```
+
+In record mode, the video captures the clean page content, and cursor/HUD data is stored separately for later compositing.
+
+## Workflow Integration
+
+The context is designed to work seamlessly with action functions:
+
+```typescript
+import { 
+  RecordingContext,
+  navigate,
+  clickAt,
+  typeText,
+  pressKey
+} from '@webreel/core';
+
+const ctx = new RecordingContext();
+ctx.setMode('preview');
+
+// All actions accept the context as first parameter
+await navigate(client, 'https://example.com');
+await clickAt(ctx, client, 400, 200);
+await typeText(ctx, client, 'Hello World');
+await pressKey(ctx, client, 'Enter');
+```
+
+The context automatically:
+- Tracks cursor position across actions
+- Records events for sound effects
+- Coordinates with timeline when in record mode
+- Manages HUD visibility for keyboard shortcuts

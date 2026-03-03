@@ -1,0 +1,167 @@
+---
+title: "webreel preview"
+description: "Run a video in a visible browser without recording"
+---
+
+## Overview
+
+The `preview` command runs your video configuration in a visible Chrome browser window without recording. This is useful for testing and debugging your steps, verifying element selectors, and seeing exactly what the automation does.
+
+## Syntax
+
+```bash
+webreel preview [video] [options]
+```
+
+## Arguments
+
+<table>
+  <tr>
+    <th>Argument</th>
+    <th>Type</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>`video`</td>
+    <td>string</td>
+    <td>Optional. Name of the video to preview. If omitted, the first video in the config is used.</td>
+  </tr>
+</table>
+
+## Options
+
+<table>
+  <tr>
+    <th>Option</th>
+    <th>Type</th>
+    <th>Default</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>`-c, --config <path>`</td>
+    <td>string</td>
+    <td>`webreel.config.json`</td>
+    <td>Path to the configuration file</td>
+  </tr>
+  <tr>
+    <td>`--verbose`</td>
+    <td>boolean</td>
+    <td>`false`</td>
+    <td>Log each step as it executes</td>
+  </tr>
+</table>
+
+## Usage Examples
+
+### Preview the first video
+
+Run the first video defined in your config:
+
+```bash
+webreel preview
+```
+
+A Chrome browser window opens and executes all steps defined in your first video configuration.
+
+### Preview a specific video
+
+Preview the video named `hero`:
+
+```bash
+webreel preview hero
+```
+
+### Use a custom config file
+
+Preview a video from a different configuration file:
+
+```bash
+webreel preview login -c auth.config.json
+```
+
+### Verbose output
+
+See detailed logging of each step:
+
+```bash
+webreel preview hero --verbose
+```
+
+Example output:
+
+```
+Previewing: hero
+
+Executing step 0: pause 500ms
+Executing step 1: click text="Get Started"
+Executing step 2: key "cmd+a"
+```
+
+## Behavior
+
+### Browser Window
+
+Preview opens a full Chrome browser window (not headless) so you can:
+- Watch the automation in real-time
+- Inspect elements using Chrome DevTools
+- Verify that selectors are working correctly
+- Check viewport dimensions and zoom levels
+- Test responsive behavior
+
+### No Recording
+
+Unlike `webreel record`, preview mode:
+- Does not capture screenshots or frames
+- Does not generate video output
+- Does not create timeline files
+- Runs faster since no encoding happens
+
+### Timing
+
+All delays, pauses, and step timings work exactly as they would during recording. This ensures preview accurately represents the final video.
+
+## When to Use
+
+Use `preview` when you:
+- Are developing or debugging a new video configuration
+- Need to verify element selectors before recording
+- Want to test step sequences without waiting for encoding
+- Need to inspect the page state at specific points
+- Are troubleshooting why a step is not working
+
+## Troubleshooting
+
+### Video not found
+
+If you see an error like:
+
+```
+Video "hero" not found. Available: login, signup, dashboard
+```
+
+Check that:
+- The video name matches exactly (case-sensitive)
+- The video is defined in your config file
+- You are using the correct config file path
+
+### Element not found during preview
+
+If a step fails to find an element:
+1. Use Chrome DevTools (F12) to inspect the page
+2. Verify the selector or text matches the actual element
+3. Check if the element needs a `wait` or `waitFor` before interaction
+4. Ensure the page has fully loaded before the step executes
+
+<Tip>
+Use `preview` extensively during development. It is much faster than recording and lets you catch issues early.
+</Tip>
+
+<Note>
+Full Chrome is automatically downloaded to `~/.webreel` on first use. You can skip this download by setting the `CHROME_PATH` environment variable to an existing Chrome installation.
+</Note>
+
+## Related Commands
+
+- [`webreel record`](/commands/record) - Record the video to generate MP4 output
+- [`webreel validate`](/commands/validate) - Validate your configuration file before previewing
+- [`webreel init`](/commands/init) - Create a new configuration file

@@ -1,0 +1,102 @@
+---
+title: "Welcome to webreel"
+description: "Record scripted browser demos as videos with cursor animation, keystroke overlays, and sound effects"
+---
+
+## What is webreel?
+
+webreel is a CLI tool that records scripted browser videos as MP4, GIF, or WebM files. Define your demo steps in a JSON config (clicks, key presses, drags, pauses) and webreel drives a headless Chrome instance, captures screenshots at approximately 60fps, and encodes the result with ffmpeg.
+
+<Note>
+  Chrome and ffmpeg are downloaded automatically on first use to `~/.webreel` if not already installed.
+</Note>
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Scripted automation" icon="play">
+    Define clicks, typing, scrolling, and other actions in JSON configs. Automate complex browser interactions with precision.
+  </Card>
+  
+  <Card title="Rich overlays" icon="cursor">
+    Animated cursor with smooth motion, keystroke HUD for keyboard shortcuts, and customizable themes.
+  </Card>
+  
+  <Card title="Multiple formats" icon="film">
+    Export as MP4, GIF, or WebM. Generate thumbnails and PNG screenshots at specific points in your demo.
+  </Card>
+  
+  <Card title="Zero setup" icon="download">
+    Chrome and ffmpeg download automatically on first run. No manual installation required.
+  </Card>
+  
+  <Card title="Flexible viewport" icon="mobile">
+    Record at any dimensions, including mobile sizes. Control zoom level and browser viewport settings.
+  </Card>
+  
+  <Card title="Reusable steps" icon="recycle">
+    Share common setup steps across videos using includes. Perfect for dismissing cookie banners or logging in.
+  </Card>
+</CardGroup>
+
+## Quick example
+
+Here's a simple config that opens a page and clicks a button:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "hello-world": {
+      "url": "https://example.com",
+      "viewport": { "width": 1920, "height": 1080 },
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "click", "text": "Get Started", "delay": 1000 }
+      ]
+    }
+  }
+}
+```
+
+Run `webreel record` and you'll get a polished MP4 video with smooth cursor animation and professional-looking effects.
+
+## Get started
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Record your first video in under 5 minutes
+  </Card>
+  
+  <Card title="Installation" icon="download" href="/installation">
+    Install webreel and verify your setup
+  </Card>
+  
+  <Card title="CLI commands" icon="terminal" href="/commands/record">
+    Explore all available commands and options
+  </Card>
+  
+  <Card title="Configuration" icon="gear" href="/config/overview">
+    Learn about all config options and actions
+  </Card>
+</CardGroup>
+
+## Use cases
+
+<CardGroup cols={2}>
+  <Card title="Product demos" icon="presentation">
+    Create polished product demo videos for landing pages, social media, or sales presentations.
+  </Card>
+  
+  <Card title="Documentation" icon="book">
+    Generate video tutorials and walkthroughs to complement written documentation.
+  </Card>
+  
+  <Card title="Testing artifacts" icon="flask">
+    Record browser interactions during testing to capture bugs or document test scenarios.
+  </Card>
+  
+  <Card title="Onboarding flows" icon="user-plus">
+    Show new users how to get started with step-by-step video guides.
+  </Card>
+</CardGroup>

@@ -1,0 +1,455 @@
+---
+title: 'Actions'
+description: 'Browser interaction functions for recording realistic demos'
+---
+
+Action functions simulate user interactions in Chrome via the DevTools Protocol. They handle cursor movement, clicks, keyboard input, and element discovery.
+
+## Navigation
+
+### navigate()
+
+Navigate to a URL and wait for page load.
+
+```typescript
+await navigate(client, url)
+```
+
+<ParamField path="client" type="CDPClient" required>
+  Chrome DevTools Protocol client
+</ParamField>
+
+<ParamField path="url" type="string" required>
+  URL to navigate to
+</ParamField>
+
+```typescript
+import { navigate } from '@webreel/core';
+
+await navigate(client, 'https://example.com');
+```
+
+### pause()
+
+Wait for a specified duration.
+
+```typescript
+await pause(ms?)
+```
+
+<ParamField path="ms" type="number" default="1200">
+  Duration to wait in milliseconds
+</ParamField>
+
+```typescript
+import { pause } from '@webreel/core';
+
+await pause(2000); // Wait 2 seconds
+```
+
+## Element Discovery
+
+### waitForSelector()
+
+Wait for an element to appear in the DOM.
+
+```typescript
+await waitForSelector(client, selector, timeoutMs?)
+```
+
+<ParamField path="client" type="CDPClient" required>
+  Chrome DevTools Protocol client
+</ParamField>
+
+<ParamField path="selector" type="string" required>
+  CSS selector to wait for
+</ParamField>
+
+<ParamField path="timeoutMs" type="number" default="30000">
+  Maximum time to wait in milliseconds
+</ParamField>
+
+```typescript
+await waitForSelector(client, '.submit-button');
+```
+
+### waitForText()
+
+Wait for text content to appear.
+
+```typescript
+await waitForText(client, text, within?, timeoutMs?)
+```
+
+<ParamField path="client" type="CDPClient" required>
+  Chrome DevTools Protocol client
+</ParamField>
+
+<ParamField path="text" type="string" required>
+  Text content to wait for
+</ParamField>
+
+<ParamField path="within" type="string">
+  Optional CSS selector to search within
+</ParamField>
+
+<ParamField path="timeoutMs" type="number" default="30000">
+  Maximum time to wait in milliseconds
+</ParamField>
+
+```typescript
+await waitForText(client, 'Welcome back');
+await waitForText(client, 'Submit', '.form-actions');
+```
+
+### findElementByText()
+
+Find an element's bounding box by text content.
+
+```typescript
+const box = await findElementByText(client, text, within?)
+```
+
+<ParamField path="client" type="CDPClient" required>
+  Chrome DevTools Protocol client
+</ParamField>
+
+<ParamField path="text" type="string" required>
+  Text content to search for
+</ParamField>
+
+<ParamField path="within" type="string">
+  Optional CSS selector to search within
+</ParamField>
+
+<ResponseField name="box" type="BoundingBox | null">
+  Element bounds, or null if not found
+  
+  ```typescript
+  interface BoundingBox {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }
+  ```
+</ResponseField>
+
+```typescript
+const button = await findElementByText(client, 'Sign In');
+if (button) {
+  await clickAt(ctx, client, button.x + button.width / 2, button.y + button.height / 2);
+}
+```
+
+### findElementBySelector()
+
+Find an element's bounding box by CSS selector.
+
+```typescript
+const box = await findElementBySelector(client, selector, within?)
+```
+
+<ParamField path="client" type="CDPClient" required>
+  Chrome DevTools Protocol client
+</ParamField>
+
+<ParamField path="selector" type="string" required>
+  CSS selector to search for
+</ParamField>
+
+<ParamField path="within" type="string">
+  Optional CSS selector to search within
+</ParamField>
+
+<ResponseField name="box" type="BoundingBox | null">
+  Element bounds, or null if not found
+</ResponseField>
+
+```typescript
+const input = await findElementBySelector(client, '#email-input');
+```
+
+## Cursor & Mouse
+
+### moveCursorTo()
+
+Animate cursor movement to a position.
+
+```typescript
+await moveCursorTo(ctx, client, x, y)
+```
+
+<ParamField path="ctx" type="RecordingContext" required>
+  Recording context for cursor tracking
+</ParamField>
+
+<ParamField path="client" type="CDPClient" required>
+  Chrome DevTools Protocol client
+</ParamField>
+
+<ParamField path="x" type="number" required>
+  Target horizontal position in pixels
+</ParamField>
+
+<ParamField path="y" type="number" required>
+  Target vertical position in pixels
+</ParamField>
+
+Animates smooth cursor movement with easing and updates the context.
+
+```typescript
+await moveCursorTo(ctx, client, 500, 300);
+```
+
+### clickAt()
+
+Click at specific coordinates.
+
+```typescript
+await clickAt(ctx, client, x, y, modifiers?)
+```
+
+<ParamField path="ctx" type="RecordingContext" required>
+  Recording context for cursor tracking
+</ParamField>
+
+<ParamField path="client" type="CDPClient" required>
+  Chrome DevTools Protocol client
+</ParamField>
+
+<ParamField path="x" type="number" required>
+  Horizontal click position in pixels
+</ParamField>
+
+<ParamField path="y" type="number" required>
+  Vertical click position in pixels
+</ParamField>
+
+<ParamField path="modifiers" type="string[]">
+  Optional modifier keys: `'cmd'`, `'ctrl'`, `'shift'`, `'alt'`, `'mod'`
+</ParamField>
+
+This function:
+- Moves cursor to position
+- Shows modifier key HUD if specified
+- Dispatches synthetic click events with correct modifier flags
+- Triggers browser focus behavior
+- Records event for sound effects
+
+```typescript
+// Simple click
+await clickAt(ctx, client, 400, 200);
+
+// Click with modifiers
+await clickAt(ctx, client, 400, 200, ['cmd']); // Cmd+Click
+await clickAt(ctx, client, 400, 200, ['mod']); // Cmd on Mac, Ctrl on Windows/Linux
+```
+
+### dragFromTo()
+
+Drag an element from one position to another.
+
+```typescript
+await dragFromTo(ctx, client, fromBox, toBox)
+```
+
+<ParamField path="ctx" type="RecordingContext" required>
+  Recording context for cursor tracking
+</ParamField>
+
+<ParamField path="client" type="CDPClient" required>
+  Chrome DevTools Protocol client
+</ParamField>
+
+<ParamField path="fromBox" type="BoundingBox" required>
+  Source element bounds
+</ParamField>
+
+<ParamField path="toBox" type="BoundingBox" required>
+  Target drop zone bounds
+</ParamField>
+
+Simulates realistic drag-and-drop with visual ghost element.
+
+```typescript
+const item = await findElementBySelector(client, '.draggable-item');
+const dropzone = await findElementBySelector(client, '.drop-zone');
+
+if (item && dropzone) {
+  await dragFromTo(ctx, client, item, dropzone);
+}
+```
+
+## Keyboard
+
+### pressKey()
+
+Press a keyboard key or shortcut.
+
+```typescript
+await pressKey(ctx, client, key, label?)
+```
+
+<ParamField path="ctx" type="RecordingContext" required>
+  Recording context for event tracking
+</ParamField>
+
+<ParamField path="client" type="CDPClient" required>
+  Chrome DevTools Protocol client
+</ParamField>
+
+<ParamField path="key" type="string" required>
+  Key combination (e.g., `'Enter'`, `'cmd+s'`, `'ctrl+shift+p'`)
+</ParamField>
+
+<ParamField path="label" type="string">
+  Optional custom label for HUD display
+</ParamField>
+
+Supported special keys:
+- `Enter`, `Tab`, `Escape`
+- `Backspace`, `Delete`
+- `ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight`
+- Letter keys: `a`-`z`
+
+Modifiers:
+- `cmd` or `meta` - Command key (Mac) or Windows key
+- `ctrl` - Control key
+- `shift` - Shift key
+- `alt` - Alt/Option key
+- `mod` - Automatically resolves to `cmd` on Mac, `ctrl` elsewhere
+
+```typescript
+// Simple keys
+await pressKey(ctx, client, 'Enter');
+await pressKey(ctx, client, 'Escape');
+
+// Shortcuts
+await pressKey(ctx, client, 'cmd+s');
+await pressKey(ctx, client, 'mod+shift+p'); // Platform-aware
+await pressKey(ctx, client, 'ctrl+a');
+
+// Custom label
+await pressKey(ctx, client, 'cmd+k', 'Search');
+```
+
+### typeText()
+
+Type text character by character.
+
+```typescript
+await typeText(ctx, client, text, delayMs?)
+```
+
+<ParamField path="ctx" type="RecordingContext" required>
+  Recording context for event tracking
+</ParamField>
+
+<ParamField path="client" type="CDPClient" required>
+  Chrome DevTools Protocol client
+</ParamField>
+
+<ParamField path="text" type="string" required>
+  Text to type
+</ParamField>
+
+<ParamField path="delayMs" type="number" default="120">
+  Base delay between keystrokes in milliseconds (randomized for realism)
+</ParamField>
+
+Simulates human-like typing with variable delays and occasional pauses.
+
+```typescript
+await typeText(ctx, client, 'hello@example.com');
+await typeText(ctx, client, 'Fast typing', 60);
+```
+
+### modKey()
+
+Get the platform-specific modifier key name.
+
+```typescript
+const mod = modKey()
+```
+
+<ResponseField name="mod" type="string">
+  Returns `'cmd'` on macOS, `'ctrl'` elsewhere
+</ResponseField>
+
+```typescript
+import { modKey } from '@webreel/core';
+
+const modifier = modKey();
+await pressKey(ctx, client, `${modifier}+s`); // Cmd+S on Mac, Ctrl+S elsewhere
+```
+
+## Utilities
+
+### captureScreenshot()
+
+Capture a screenshot of the current page.
+
+```typescript
+await captureScreenshot(client, outputPath)
+```
+
+<ParamField path="client" type="CDPClient" required>
+  Chrome DevTools Protocol client
+</ParamField>
+
+<ParamField path="outputPath" type="string" required>
+  Path where PNG screenshot will be saved
+</ParamField>
+
+```typescript
+await captureScreenshot(client, './screenshot.png');
+```
+
+## Complete Example
+
+```typescript
+import {
+  launchChrome,
+  connectCDP,
+  Recorder,
+  RecordingContext,
+  navigate,
+  waitForSelector,
+  findElementByText,
+  clickAt,
+  typeText,
+  pressKey
+} from '@webreel/core';
+
+const chrome = await launchChrome();
+const client = await connectCDP(chrome.wsUrl);
+
+const ctx = new RecordingContext();
+const recorder = new Recorder(1920, 1080, { fps: 60 });
+
+await recorder.start(client, './demo.mp4', ctx);
+
+// Navigate and wait
+await navigate(client, 'https://example.com');
+await waitForSelector(client, '.login-form');
+
+// Find and click
+const signInButton = await findElementByText(client, 'Sign In');
+if (signInButton) {
+  await clickAt(ctx, client, 
+    signInButton.x + signInButton.width / 2,
+    signInButton.y + signInButton.height / 2
+  );
+}
+
+// Type credentials
+await typeText(ctx, client, 'user@example.com');
+await pressKey(ctx, client, 'Tab');
+await typeText(ctx, client, 'password123');
+await pressKey(ctx, client, 'Enter');
+
+await recorder.stop();
+await client.close();
+await chrome.process.kill();
+```

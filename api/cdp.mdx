@@ -1,0 +1,241 @@
+---
+title: CDP
+description: Connect to Chrome DevTools Protocol
+---
+
+## Overview
+
+The CDP module provides a function to connect to Chrome's DevTools Protocol, which is used to control the browser, navigate pages, inject scripts, and capture screenshots.
+
+## Functions
+
+### connectCDP
+
+Connects to Chrome DevTools Protocol on the specified port.
+
+```typescript
+function connectCDP(port: number): Promise<CDPClient>
+```
+
+<ParamField path="port" type="number" required>
+  The remote debugging port that Chrome is listening on. This is typically obtained from a ChromeInstance.
+</ParamField>
+
+<ResponseField name="CDPClient" type="object">
+  A client for interacting with Chrome DevTools Protocol.
+</ResponseField>
+
+```typescript
+import { launchChrome, connectCDP } from '@webreel/core';
+
+const chrome = await launchChrome();
+const client = await connectCDP(chrome.port);
+
+await client.Page.enable();
+await client.Page.navigate({ url: 'https://example.com' });
+
+await client.close();
+chrome.kill();
+```
+
+## Types
+
+### CDPClient
+
+The CDP client provides typed access to Chrome DevTools Protocol domains.
+
+```typescript
+interface CDPClient {
+  close: () => Promise<void>;
+  Runtime: RuntimeDomain;
+  Page: PageDomain;
+  Input: InputDomain;
+  Emulation: EmulationDomain;
+  DOM: DOMDomain;
+}
+```
+
+#### Runtime Domain
+
+Execute JavaScript and enable runtime features.
+
+```typescript
+interface RuntimeDomain {
+  enable: () => Promise<void>;
+  evaluate: (params: {
+    expression: string;
+    returnByValue?: boolean;
+    awaitPromise?: boolean;
+  }) => Promise<{ result: { value?: unknown } }>;
+}
+```
+
+```typescript
+// Execute JavaScript in the page
+const result = await client.Runtime.evaluate({
+  expression: 'document.title',
+  returnByValue: true
+});
+console.log(result.result.value);
+```
+
+#### Page Domain
+
+Navigate and capture screenshots.
+
+```typescript
+interface PageDomain {
+  enable: () => Promise<void>;
+  navigate: (params: { url: string }) => Promise<void>;
+  loadEventFired: () => Promise<void>;
+  captureScreenshot: (params: {
+    format?: string;
+    quality?: number;
+    optimizeForSpeed?: boolean;
+  }) => Promise<{ data: string }>;
+}
+```
+
+```typescript
+// Navigate and capture screenshot
+await client.Page.enable();
+await client.Page.navigate({ url: 'https://example.com' });
+
+const screenshot = await client.Page.captureScreenshot({
+  format: 'png',
+  optimizeForSpeed: true
+});
+
+// screenshot.data is a base64-encoded PNG
+```
+
+#### Input Domain
+
+Dispatch mouse and keyboard events.
+
+```typescript
+interface InputDomain {
+  dispatchMouseEvent: (params: {
+    type: string;
+    x: number;
+    y: number;
+    button?: string;
+    buttons?: number;
+    clickCount?: number;
+    modifiers?: number;
+  }) => Promise<void>;
+  
+  dispatchKeyEvent: (params: {
+    type: string;
+    key?: string;
+    code?: string;
+    text?: string;
+    windowsVirtualKeyCode?: number;
+    modifiers?: number;
+    commands?: string[];
+  }) => Promise<void>;
+}
+```
+
+```typescript
+// Click at coordinates
+await client.Input.dispatchMouseEvent({
+  type: 'mousePressed',
+  x: 100,
+  y: 200,
+  button: 'left',
+  clickCount: 1
+});
+
+await client.Input.dispatchMouseEvent({
+  type: 'mouseReleased',
+  x: 100,
+  y: 200,
+  button: 'left'
+});
+
+// Type text
+await client.Input.dispatchKeyEvent({
+  type: 'keyDown',
+  text: 'Hello'
+});
+```
+
+#### Emulation Domain
+
+Set viewport size and device metrics.
+
+```typescript
+interface EmulationDomain {
+  setDeviceMetricsOverride: (params: {
+    width: number;
+    height: number;
+    deviceScaleFactor: number;
+    mobile: boolean;
+  }) => Promise<void>;
+}
+```
+
+```typescript
+// Set viewport to 1920x1080
+await client.Emulation.setDeviceMetricsOverride({
+  width: 1920,
+  height: 1080,
+  deviceScaleFactor: 1,
+  mobile: false
+});
+```
+
+#### DOM Domain
+
+Enable DOM inspection.
+
+```typescript
+interface DOMDomain {
+  enable: () => Promise<void>;
+}
+```
+
+## Usage with Recorder
+
+The CDP client is typically used through the RecordingContext, which provides higher-level recording actions. However, you can access the raw CDP client when you need fine-grained control:
+
+```typescript
+import { Recorder } from '@webreel/core';
+
+const recorder = new Recorder({
+  outputPath: 'output.webm',
+  fps: 60
+});
+
+await recorder.start(async (ctx) => {
+  // Access raw CDP client
+  const cookies = await ctx.client.Network.getCookies();
+  
+  // Use high-level actions
+  await ctx.navigate('https://example.com');
+});
+```
+
+## Connection Lifecycle
+
+The CDP connection is automatically managed by the Recorder. If you're using connectCDP directly, remember to:
+
+1. Enable required domains before use
+2. Close the connection when done
+3. Kill the Chrome process
+
+```typescript
+const chrome = await launchChrome();
+const client = await connectCDP(chrome.port);
+
+try {
+  await client.Runtime.enable();
+  await client.Page.enable();
+  
+  // Your code here
+} finally {
+  await client.close();
+  chrome.kill();
+}
+```

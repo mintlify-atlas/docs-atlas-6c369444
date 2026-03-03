@@ -1,0 +1,195 @@
+---
+title: "webreel record"
+description: "Record scripted browser videos as MP4 files"
+---
+
+## Overview
+
+The `record` command is the core command of webreel. It executes the steps defined in your configuration file, drives a headless Chrome instance, captures screenshots at 60fps, and encodes the result using ffmpeg.
+
+## Syntax
+
+```bash
+webreel record [videos...] [options]
+```
+
+## Arguments
+
+<table>
+  <tr>
+    <th>Argument</th>
+    <th>Type</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>`videos`</td>
+    <td>string[]</td>
+    <td>Optional. Specific video names to record. If omitted, all videos in the config are recorded.</td>
+  </tr>
+</table>
+
+## Options
+
+<table>
+  <tr>
+    <th>Option</th>
+    <th>Type</th>
+    <th>Default</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>`-c, --config <path>`</td>
+    <td>string</td>
+    <td>`webreel.config.json`</td>
+    <td>Path to the configuration file</td>
+  </tr>
+  <tr>
+    <td>`--verbose`</td>
+    <td>boolean</td>
+    <td>`false`</td>
+    <td>Log each step as it executes during recording</td>
+  </tr>
+  <tr>
+    <td>`--watch`</td>
+    <td>boolean</td>
+    <td>`false`</td>
+    <td>Re-record automatically when config files change</td>
+  </tr>
+  <tr>
+    <td>`--dry-run`</td>
+    <td>boolean</td>
+    <td>`false`</td>
+    <td>Print the resolved configuration and step list without recording</td>
+  </tr>
+  <tr>
+    <td>`--frames`</td>
+    <td>boolean</td>
+    <td>`false`</td>
+    <td>Save raw frames as JPEGs in `.webreel/frames/` for debugging</td>
+  </tr>
+</table>
+
+## Usage Examples
+
+### Record all videos
+
+Record all videos defined in your `webreel.config.json`:
+
+```bash
+webreel record
+```
+
+### Record specific videos
+
+Record only the videos named `hero` and `login`:
+
+```bash
+webreel record hero login
+```
+
+### Use a custom config file
+
+Specify a different configuration file:
+
+```bash
+webreel record -c custom.config.json
+```
+
+### Watch mode for development
+
+Automatically re-record when your configuration changes:
+
+```bash
+webreel record --watch
+```
+
+This watches both the main config file and any included step files. The command debounces changes with a 300ms delay.
+
+### Verbose output
+
+See detailed logging of each step as it executes:
+
+```bash
+webreel record --verbose
+```
+
+### Dry run
+
+Preview the resolved configuration without recording:
+
+```bash
+webreel record --dry-run
+```
+
+Output example:
+
+```
+Resolved configuration:
+
+  outDir:       videos/
+  viewport:     1920x1080
+  defaultDelay: 500ms
+
+  1 video(s):
+
+  hello-world
+    url:      https://example.com
+    viewport: 1920x1080
+    steps:    3 step(s)
+      0: pause 500ms
+      1: click text="Get Started"
+      2: key "cmd+a" delay: 1000ms
+```
+
+### Save debug frames
+
+Save raw JPEG frames during recording for debugging:
+
+```bash
+webreel record --frames
+```
+
+Frames are saved to `.webreel/frames/<video-name>/`.
+
+### Combine options
+
+Combine multiple options for a specific workflow:
+
+```bash
+webreel record hero --verbose --watch
+```
+
+## Output
+
+By default, videos are saved to:
+- `videos/<video-name>.mp4` (or the path specified in `outDir`)
+- Thumbnail: `videos/<video-name>.jpg` (if thumbnail generation is enabled)
+
+Raw recordings and timeline data are stored in:
+- `.webreel/raw/<video-name>.mp4`
+- `.webreel/timelines/<video-name>.timeline.json`
+
+These raw files allow you to re-composite videos later using the `composite` command without re-recording.
+
+## When to Use
+
+Use `record` when you:
+- Want to generate final video output from your configuration
+- Need to capture all browser interactions and animations
+- Are creating marketing videos, demos, or documentation
+- Want to iterate on your video with `--watch` mode
+
+<Tip>
+Use `--dry-run` before recording to verify your configuration is correct. This saves time by catching errors early.
+</Tip>
+
+<Note>
+Chrome and ffmpeg are automatically downloaded to `~/.webreel` on first use if not already installed. Use `webreel install` to pre-install them.
+</Note>
+
+## Related Commands
+
+- [`webreel preview`](/commands/preview) - Test your configuration in a visible browser without recording
+- [`webreel composite`](/commands/composite) - Re-composite videos from stored recordings
+- [`webreel validate`](/commands/validate) - Validate your configuration file
+- [`webreel init`](/commands/init) - Create a new configuration file

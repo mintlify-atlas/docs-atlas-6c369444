@@ -1,0 +1,154 @@
+---
+title: GIF Output
+description: Export recordings as animated GIFs
+---
+
+The gif-output example demonstrates how to export recordings as animated GIFs instead of MP4 videos, ideal for embedding in GitHub READMEs and documentation.
+
+## Configuration
+
+Here's the complete `webreel.config.json` for this example:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "gif-output": {
+      "url": "./web/index.html",
+      "viewport": { "width": 1920, "height": 1080 },
+      "zoom": 2,
+      "output": "gif-output.gif",
+      "waitFor": ".primary",
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "click", "selector": "a.primary", "delay": 1000 }
+      ]
+    }
+  }
+}
+```
+
+## What It Demonstrates
+
+### GIF Output Format
+
+Set the output filename with a `.gif` extension:
+
+```json
+"output": "gif-output.gif"
+```
+
+Webreel automatically detects the extension and encodes the recording as an animated GIF.
+
+### Output Location
+
+The GIF is saved to the `videos/` directory:
+
+```
+videos/
+  gif-output.gif
+```
+
+You can specify a custom path:
+
+```json
+"output": "assets/demo.gif"
+```
+
+### GIF Encoding Details
+
+Webreel uses palette-based encoding optimized for screen recordings:
+
+- **Frame Rate**: 15fps (reduced from video's 60fps)
+- **Color Palette**: Optimized per-frame for best quality
+- **File Size**: Typically 5-10x larger than MP4 for the same content
+- **Compatibility**: Works everywhere (GitHub, Slack, email, etc.)
+
+### When to Use GIF
+
+GIFs are ideal for:
+
+- GitHub README files and documentation
+- Embedding in Markdown files
+- Slack and chat messages
+- Email newsletters
+- Anywhere MP4 isn't supported
+
+### When to Use MP4
+
+Prefer MP4 for:
+
+- Long recordings (GIFs get very large)
+- High-fidelity output (MP4 has better compression)
+- Social media (Twitter, LinkedIn support MP4)
+- Website embeds with `<video>` tags
+
+### File Size Considerations
+
+GIFs are significantly larger than MP4:
+
+- 5-second recording: ~2-4 MB (GIF) vs ~200-400 KB (MP4)
+- 30-second recording: ~15-30 MB (GIF) vs ~1-2 MB (MP4)
+
+Keep GIF recordings short for reasonable file sizes.
+
+### Reducing GIF File Size
+
+To create smaller GIFs:
+
+1. **Use smaller viewports**
+   ```json
+   "viewport": { "width": 1280, "height": 720 }
+   ```
+
+2. **Reduce zoom**
+   ```json
+   "zoom": 1
+   ```
+
+3. **Keep recordings short**
+   - Aim for under 10 seconds
+   - Focus on a single interaction
+
+4. **Minimize color complexity**
+   - Simple UIs compress better
+   - Avoid gradient backgrounds
+
+### Embedding GIFs
+
+In Markdown:
+
+```markdown
+![Demo](videos/gif-output.gif)
+```
+
+In HTML:
+
+```html
+<img src="videos/gif-output.gif" alt="Demo">
+```
+
+### Looping Behavior
+
+GIFs loop infinitely by default. This works well for short demonstrations but can be distracting for longer recordings.
+
+For one-time playback, use MP4 with the `loop` attribute:
+
+```html
+<video src="demo.mp4" autoplay muted></video>
+```
+
+## Running the Example
+
+```bash
+cd examples/gif-output
+webreel record
+```
+
+The output GIF will be saved to `videos/gif-output.gif`.
+
+## Next Steps
+
+- [WebM Output](/examples/webm-output) - Export as WebM video
+- [Screenshots](/examples/screenshots) - Capture static PNGs
+- [Hello World](/examples/hello-world) - Default MP4 output

@@ -1,0 +1,186 @@
+---
+title: Chrome
+description: Launch and manage Chrome instances for recording
+---
+
+## Overview
+
+The Chrome module provides functions to launch and manage Chrome browser instances with the Chrome DevTools Protocol enabled. It automatically downloads Chrome for Testing or chrome-headless-shell when needed.
+
+## Functions
+
+### launchChrome
+
+Launches a Chrome instance with DevTools Protocol enabled.
+
+```typescript
+function launchChrome(options?: LaunchChromeOptions): Promise<ChromeInstance>
+```
+
+<ParamField path="options" type="LaunchChromeOptions" optional>
+  Configuration options for launching Chrome.
+  
+  <ParamField path="headless" type="boolean" default="true">
+    Whether to run Chrome in headless mode. When true, uses chrome-headless-shell with frame control enabled.
+  </ParamField>
+</ParamField>
+
+<ResponseField name="ChromeInstance" type="object">
+  <ResponseField name="process" type="ChildProcess">
+    The spawned Chrome process.
+  </ResponseField>
+  
+  <ResponseField name="port" type="number">
+    The remote debugging port Chrome is listening on.
+  </ResponseField>
+  
+  <ResponseField name="kill" type="() => void">
+    Function to terminate the Chrome process and clean up the user data directory.
+  </ResponseField>
+</ResponseField>
+
+```typescript
+import { launchChrome } from '@webreel/core';
+
+const chrome = await launchChrome({ headless: true });
+console.log(`Chrome running on port ${chrome.port}`);
+
+// Clean up when done
+chrome.kill();
+```
+
+### ensureChrome
+
+Ensures Chrome for Testing is available, downloading it if necessary.
+
+```typescript
+function ensureChrome(): Promise<string>
+```
+
+<ResponseField name="string" type="string">
+  Path to the Chrome executable.
+</ResponseField>
+
+The function follows this resolution order:
+1. Returns `CHROME_PATH` environment variable if set
+2. Checks `CHROME_CACHE_DIR` for a previously downloaded Chrome for Testing
+3. Downloads the latest stable Chrome for Testing build
+4. Falls back to system-installed Chrome if download fails
+
+```typescript
+import { ensureChrome } from '@webreel/core';
+
+const chromePath = await ensureChrome();
+console.log(`Chrome binary: ${chromePath}`);
+```
+
+### ensureHeadlessShell
+
+Ensures chrome-headless-shell is available, downloading it if necessary.
+
+```typescript
+function ensureHeadlessShell(): Promise<string>
+```
+
+<ResponseField name="string" type="string">
+  Path to the chrome-headless-shell executable.
+</ResponseField>
+
+The function follows this resolution order:
+1. Returns `CHROME_HEADLESS_PATH` environment variable if set
+2. Checks `HEADLESS_SHELL_CACHE_DIR` for a previously downloaded build
+3. Downloads the latest stable chrome-headless-shell build
+
+```typescript
+import { ensureHeadlessShell } from '@webreel/core';
+
+const shellPath = await ensureHeadlessShell();
+console.log(`Headless shell binary: ${shellPath}`);
+```
+
+## Types
+
+### LaunchChromeOptions
+
+Configuration for launching Chrome.
+
+```typescript
+interface LaunchChromeOptions {
+  headless?: boolean;
+}
+```
+
+### ChromeInstance
+
+Represents a running Chrome instance.
+
+```typescript
+interface ChromeInstance {
+  process: ChildProcess;
+  port: number;
+  kill: () => void;
+}
+```
+
+## Constants
+
+### CHROME_CACHE_DIR
+
+Directory where Chrome for Testing binaries are cached.
+
+```typescript
+const CHROME_CACHE_DIR: string
+```
+
+Resolves to `~/.webreel/bin/chrome`.
+
+### HEADLESS_SHELL_CACHE_DIR
+
+Directory where chrome-headless-shell binaries are cached.
+
+```typescript
+const HEADLESS_SHELL_CACHE_DIR: string
+```
+
+Resolves to `~/.webreel/bin/chrome-headless-shell`.
+
+## Headless Mode
+
+When `headless: true` (default), webreel launches chrome-headless-shell with specialized flags for deterministic rendering:
+
+- `--enable-begin-frame-control` - Manual frame advancement
+- `--run-all-compositor-stages-before-draw` - Complete rendering pipeline
+- `--disable-threaded-animation` - Deterministic animations
+- `--disable-threaded-scrolling` - Predictable scroll behavior
+- `--disable-checker-imaging` - Immediate image decoding
+
+These flags ensure every frame is fully rendered before capture, producing smooth recordings without dropped frames or visual artifacts.
+
+## Platform Support
+
+Chrome for Testing is automatically downloaded for:
+
+- macOS (Intel and Apple Silicon)
+- Linux (x64 and arm64)
+- Windows (x64)
+
+## Environment Variables
+
+<table>
+  <thead>
+    <tr>
+      <th>Variable</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>CHROME_PATH</code></td>
+      <td>Path to a Chrome executable to use instead of downloading</td>
+    </tr>
+    <tr>
+      <td><code>CHROME_HEADLESS_PATH</code></td>
+      <td>Path to a chrome-headless-shell executable to use instead of downloading</td>
+    </tr>
+  </tbody>
+</table>

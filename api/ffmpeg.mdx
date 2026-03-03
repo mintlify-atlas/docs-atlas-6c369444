@@ -1,0 +1,147 @@
+---
+title: FFmpeg
+description: FFmpeg binary management and utilities
+---
+
+## Overview
+
+The FFmpeg module ensures FFmpeg is available for video processing and composition. It automatically downloads a static FFmpeg build when needed.
+
+## Functions
+
+### ensureFfmpeg
+
+Ensures FFmpeg is available, downloading it if necessary.
+
+```typescript
+function ensureFfmpeg(): Promise<string>
+```
+
+<ResponseField name="string" type="string">
+  Path to the FFmpeg executable.
+</ResponseField>
+
+The function follows this resolution order:
+1. Returns `FFMPEG_PATH` environment variable if set
+2. Checks `FFMPEG_CACHE_DIR` for a previously downloaded build
+3. Downloads the appropriate FFmpeg build for your platform
+4. Falls back to system-installed FFmpeg if download fails
+
+```typescript
+import { ensureFfmpeg } from '@webreel/core';
+
+const ffmpegPath = await ensureFfmpeg();
+console.log(`FFmpeg binary: ${ffmpegPath}`);
+```
+
+## Constants
+
+### FFMPEG_CACHE_DIR
+
+Directory where FFmpeg binaries are cached.
+
+```typescript
+const FFMPEG_CACHE_DIR: string
+```
+
+Resolves to `~/.webreel/bin/ffmpeg`.
+
+```typescript
+import { FFMPEG_CACHE_DIR } from '@webreel/core';
+
+console.log(`FFmpeg cache: ${FFMPEG_CACHE_DIR}`);
+```
+
+## Platform Support
+
+FFmpeg is automatically downloaded from trusted sources:
+
+### macOS (Intel and Apple Silicon)
+
+Builds from [evermeet.cx](https://evermeet.cx/ffmpeg/), which is linked from the official FFmpeg website. Apple Silicon Macs run the Intel build via Rosetta 2.
+
+### Linux (x64 and arm64)
+
+Builds from [BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds), which are:
+- Linked from the official FFmpeg website
+- Built via GitHub Actions with reproducible builds
+- GPL-licensed with all codecs enabled
+
+### Windows (x64)
+
+Builds from [BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds) with the same guarantees as Linux.
+
+## Environment Variables
+
+<table>
+  <thead>
+    <tr>
+      <th>Variable</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>FFMPEG_PATH</code></td>
+      <td>Path to an FFmpeg executable to use instead of downloading</td>
+    </tr>
+  </tbody>
+</table>
+
+## Usage in Composition
+
+The Recorder and compose functions automatically call ensureFfmpeg internally. You typically don't need to call it directly:
+
+```typescript
+import { Recorder } from '@webreel/core';
+
+const recorder = new Recorder({
+  outputPath: 'demo.webm',
+  fps: 60
+});
+
+// FFmpeg is ensured automatically
+await recorder.start(async (ctx) => {
+  await ctx.navigate('https://example.com');
+});
+```
+
+## Direct Usage
+
+If you need to run FFmpeg commands directly:
+
+```typescript
+import { ensureFfmpeg } from '@webreel/core';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+
+const execFileAsync = promisify(execFile);
+const ffmpegPath = await ensureFfmpeg();
+
+const { stdout } = await execFileAsync(ffmpegPath, [
+  '-version'
+]);
+
+console.log(stdout);
+```
+
+## Cache Management
+
+FFmpeg binaries are cached in `~/.webreel/bin/ffmpeg/` to avoid repeated downloads. To force a fresh download:
+
+```bash
+rm -rf ~/.webreel/bin/ffmpeg
+```
+
+The next call to ensureFfmpeg will download a new build.
+
+## Binary Details
+
+The downloaded FFmpeg builds include:
+
+- All common codecs (H.264, H.265, VP9, AV1, etc.)
+- Hardware acceleration support where available
+- Full filter support for complex compositions
+- Static linking for portability
+
+Current version: FFmpeg 7.1 (stable release)

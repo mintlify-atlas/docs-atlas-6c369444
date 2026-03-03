@@ -1,0 +1,321 @@
+---
+title: Video Configuration Options
+description: Per-video configuration fields for URLs, viewports, output, and recording behavior
+---
+
+## Video Configuration
+
+Each video is defined as a key-value pair in the `videos` object. The key becomes the video name, and the value is a `VideoConfig` object.
+
+```json
+{
+  "videos": {
+    "my-video-name": {
+      "url": "https://example.com",
+      "viewport": { "width": 1920, "height": 1080 },
+      "steps": []
+    }
+  }
+}
+```
+
+## Required Fields
+
+<ParamField path="url" type="string" required>
+  URL to navigate to. Can be absolute or relative to `baseUrl`.
+
+  ```json
+  // Absolute URL
+  { "url": "https://example.com" }
+
+  // Relative to baseUrl
+  { "baseUrl": "https://myapp.com", "url": "/dashboard" }
+
+  // Local file
+  { "url": "./web/index.html" }
+  ```
+</ParamField>
+
+<ParamField path="steps" type="Step[]" required>
+  Array of actions to perform during the recording. See [Actions](/config/actions).
+
+  ```json
+  {
+    "steps": [
+      { "action": "pause", "ms": 500 },
+      { "action": "click", "text": "Get Started" },
+      { "action": "type", "text": "hello@example.com", "selector": "#email" }
+    ]
+  }
+  ```
+</ParamField>
+
+## Optional Fields
+
+<ParamField path="baseUrl" type="string">
+  Overrides the top-level `baseUrl` for this video. Prepended to relative URLs.
+
+  ```json
+  {
+    "baseUrl": "https://staging.myapp.com",
+    "videos": {
+      "login": {
+        "baseUrl": "https://production.myapp.com",
+        "url": "/login",
+        "steps": []
+      }
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField path="viewport" type="object | string">
+  Browser viewport dimensions. Overrides the top-level `viewport`. Accepts an object with `width` and `height`, or a preset name.
+
+  ```json
+  // Custom dimensions
+  { "viewport": { "width": 1920, "height": 1080 } }
+
+  // Preset name
+  { "viewport": "iphone-15" }
+  ```
+
+  See [Configuration Overview](/config/overview#viewport) for available presets.
+</ParamField>
+
+<ParamField path="zoom" type="number">
+  CSS zoom level applied to the page. Useful for scaling content up or down without changing the viewport.
+
+  ```json
+  {
+    "viewport": { "width": 1920, "height": 1080 },
+    "zoom": 2,
+    "steps": []
+  }
+  ```
+
+  <Note>
+    `zoom: 2` doubles the apparent size of the page content while maintaining the 1920x1080 recording resolution.
+  </Note>
+</ParamField>
+
+<ParamField path="fps" type="number" default="60">
+  Target frames per second for the recording. Higher values produce smoother animations but larger file sizes.
+</ParamField>
+
+<ParamField path="quality" type="number" default="23">
+  Video encoding quality (CRF value). Lower values produce higher quality but larger files. Range: 0-51.
+
+  - `18` - Visually lossless
+  - `23` - High quality (default)
+  - `28` - Medium quality
+</ParamField>
+
+<ParamField path="waitFor" type="string | ElementTarget">
+  CSS selector or element target to wait for before starting the recording. Ensures the page is fully loaded.
+
+  ```json
+  // Wait for a specific element
+  { "waitFor": ".hero-section" }
+
+  // Wait for text content
+  {
+    "waitFor": {
+      "text": "Welcome"
+    }
+  }
+
+  // Wait for element within a container
+  {
+    "waitFor": {
+      "selector": ".cta-button",
+      "within": ".hero"
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField path="output" type="string" default="<name>.mp4">
+  Output file path. Defaults to `<video-name>.mp4` in the `outDir` directory.
+
+  Supported formats:
+  - `.mp4` - H.264 video (default)
+  - `.webm` - VP9 video
+  - `.gif` - Animated GIF
+
+  ```json
+  // Custom filename
+  { "output": "demo-video.mp4" }
+
+  // Subdirectory
+  { "output": "marketing/hero.mp4" }
+
+  // WebM format
+  { "output": "demo.webm" }
+
+  // GIF format
+  { "output": "animation.gif" }
+  ```
+</ParamField>
+
+<ParamField path="thumbnail" type="object" default="{ time: 0, enabled: true }">
+  Thumbnail generation settings.
+
+  <Expandable title="Thumbnail Fields">
+    <ParamField path="time" type="number" default="0">
+      Time in seconds to extract the thumbnail frame. Use `0` for the first frame.
+    </ParamField>
+
+    <ParamField path="enabled" type="boolean" default="true">
+      Whether to generate a thumbnail. Set to `false` to disable.
+    </ParamField>
+  </Expandable>
+
+  ```json
+  // Extract thumbnail at 2.5 seconds
+  { "thumbnail": { "time": 2.5 } }
+
+  // Disable thumbnail generation
+  { "thumbnail": { "enabled": false } }
+  ```
+</ParamField>
+
+<ParamField path="include" type="string[]">
+  Array of paths to JSON files containing steps. These steps are prepended to the video's steps.
+
+  Overrides the top-level `include` field if both are defined.
+
+  ```json
+  {
+    "include": ["./steps/login.json", "./steps/navigate-to-dashboard.json"],
+    "steps": [
+      { "action": "click", "text": "Settings" }
+    ]
+  }
+  ```
+</ParamField>
+
+<ParamField path="theme" type="ThemeConfig">
+  Cursor and HUD overlay customization for this video. Overrides the top-level `theme`.
+
+  See [Theme Customization](/config/theme-customization).
+</ParamField>
+
+<ParamField path="sfx" type="SfxConfig">
+  Sound effects configuration for this video. Overrides the top-level `sfx`.
+
+  ```json
+  {
+    "sfx": {
+      "click": 3,
+      "key": "./assets/custom-key.mp3"
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField path="defaultDelay" type="number">
+  Default delay in milliseconds to wait after each step. Overrides the top-level `defaultDelay`.
+
+  ```json
+  {
+    "defaultDelay": 800,
+    "steps": [
+      { "action": "click", "text": "Submit" },
+      { "action": "click", "text": "Continue", "delay": 1500 }
+    ]
+  }
+  ```
+
+  The first click waits 800ms (from `defaultDelay`), the second waits 1500ms (overridden per-step).
+</ParamField>
+
+<ParamField path="clickDwell" type="number" default="100">
+  Milliseconds to pause between mouse-down and mouse-up during clicks. Overrides the top-level `clickDwell`.
+</ParamField>
+
+## Complete Example
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "outDir": "videos/",
+  "baseUrl": "https://myapp.com",
+  "viewport": { "width": 1920, "height": 1080 },
+  "defaultDelay": 500,
+  "videos": {
+    "homepage-hero": {
+      "url": "/",
+      "zoom": 2,
+      "waitFor": ".hero",
+      "output": "marketing/homepage.mp4",
+      "thumbnail": { "time": 1.5 },
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "click", "text": "Get Started", "delay": 1000 }
+      ]
+    },
+    "mobile-menu": {
+      "url": "/",
+      "viewport": "iphone-15",
+      "zoom": 2,
+      "output": "mobile-demo.gif",
+      "thumbnail": { "enabled": false },
+      "theme": {
+        "cursor": {
+          "hotspot": "center"
+        }
+      },
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "click", "selector": ".menu-toggle" },
+        { "action": "pause", "ms": 1000 }
+      ]
+    },
+    "login-flow": {
+      "url": "/login",
+      "include": ["./steps/dismiss-cookie-banner.json"],
+      "defaultDelay": 600,
+      "steps": [
+        { "action": "type", "text": "user@example.com", "selector": "#email" },
+        { "action": "type", "text": "password123", "selector": "#password" },
+        { "action": "click", "text": "Sign In", "delay": 1000 }
+      ]
+    }
+  }
+}
+```
+
+## Multiple Videos
+
+Define multiple videos in a single config to record related demos:
+
+```json
+{
+  "viewport": { "width": 1920, "height": 1080 },
+  "defaultDelay": 500,
+  "videos": {
+    "features-automation": {
+      "url": "./web/index.html",
+      "steps": [
+        { "action": "scroll", "y": 300 },
+        { "action": "click", "text": "Automation" }
+      ]
+    },
+    "features-analytics": {
+      "url": "./web/index.html",
+      "steps": [
+        { "action": "scroll", "y": 500 },
+        { "action": "click", "text": "Analytics" }
+      ]
+    }
+  }
+}
+```
+
+Record specific videos by name:
+
+```bash
+webreel record features-automation
+webreel record features-automation features-analytics
+```

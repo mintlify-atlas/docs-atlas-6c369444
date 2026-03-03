@@ -1,0 +1,231 @@
+---
+title: "webreel validate"
+description: "Validate a webreel configuration file"
+---
+
+## Overview
+
+The `validate` command checks your webreel configuration file for errors without executing any steps or recording. It validates the file against the webreel JSON schema and reports any syntax errors, invalid fields, or missing required properties.
+
+## Syntax
+
+```bash
+webreel validate [options]
+```
+
+## Options
+
+<table>
+  <tr>
+    <th>Option</th>
+    <th>Type</th>
+    <th>Default</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>`-c, --config <path>`</td>
+    <td>string</td>
+    <td>`webreel.config.json`</td>
+    <td>Path to the configuration file to validate</td>
+  </tr>
+</table>
+
+## Usage Examples
+
+### Validate the default config
+
+Validate `webreel.config.json` in the current directory:
+
+```bash
+webreel validate
+```
+
+Output on success:
+
+```
+webreel.config.json: valid
+```
+
+### Validate a custom config
+
+Validate a specific configuration file:
+
+```bash
+webreel validate -c hero.config.json
+```
+
+### Validate before recording
+
+Run validation before a long recording job:
+
+```bash
+webreel validate && webreel record
+```
+
+This ensures the config is valid before starting the recording.
+
+## What Is Validated
+
+### JSON syntax
+
+The command checks that your file is valid JSON or JSONC (JSON with comments):
+- Proper bracket and brace matching
+- Correct quote usage
+- Valid escape sequences
+- No trailing commas (in strict JSON mode)
+
+### Schema compliance
+
+If your config includes a `$schema` field, validation checks:
+- All required fields are present
+- Field types match the schema (string, number, boolean, object, array)
+- Enum values are valid
+- Nested objects follow the correct structure
+
+### Field presence
+
+Validates that required fields exist:
+- `videos` object must be present
+- Each video must have a `url`
+- Each step must have an `action`
+- Action-specific required fields (e.g., `ms` for `pause`, `key` for `key` action)
+
+### Type checking
+
+Ensures field values have the correct type:
+- Numbers for `viewport.width`, `viewport.height`, `defaultDelay`, `ms`
+- Strings for `url`, `text`, `selector`, `key`
+- Booleans for flags like `thumbnail.enabled`
+- Arrays for `steps`, `include`
+
+## Error Reporting
+
+### JSON syntax errors
+
+If your JSON is malformed:
+
+```
+Error: webreel.config.json: invalid JSON - Unexpected token } in JSON at position 245
+```
+
+This indicates a syntax error at character position 245. Check for:
+- Missing commas
+- Extra commas
+- Unclosed brackets or braces
+- Unquoted strings
+
+### Schema validation errors
+
+If the config structure is invalid:
+
+```
+webreel.config.json:
+  Line 12: videos.hero.viewport.width - must be a number
+  Line 18: videos.hero.steps[2] - missing required property "ms"
+  Line 22: videos.hero.theme.cursor.color - must match pattern ^#[0-9a-fA-F]{6}$
+```
+
+Each error includes:
+- Line number (if available)
+- Path to the invalid field
+- Description of what is wrong
+
+## File Support
+
+### JSON files
+
+Validation works with `.json` files and uses the JSONC parser, which supports:
+- Single-line comments: `// comment`
+- Multi-line comments: `/* comment */`
+- Trailing commas (parsed but may be flagged depending on schema)
+
+### Other file types
+
+For non-JSON config files, validate attempts to load the config using the standard config loader, which may support other formats in the future.
+
+## Schema Versions
+
+webreel validates against different schema versions based on your `$schema` field:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json"
+}
+```
+
+The version is extracted from the URL. If no schema is specified, the latest version is assumed.
+
+## When to Use
+
+Use `validate` when you:
+- Have made manual edits to your config file
+- Are debugging configuration errors
+- Want to check syntax before committing changes
+- Need to validate multiple config files in a CI pipeline
+- Are generating configs programmatically
+
+## Validation in Workflows
+
+### Pre-commit hook
+
+Validate configs before committing:
+
+```bash
+#!/bin/sh
+webreel validate || exit 1
+```
+
+### CI/CD pipeline
+
+Validate in your build pipeline:
+
+```yaml
+steps:
+  - name: Validate webreel config
+    run: webreel validate
+```
+
+### Multiple configs
+
+Validate all config files in a directory:
+
+```bash
+for config in *.config.json; do
+  webreel validate -c "$config" || exit 1
+done
+```
+
+## Limitations
+
+### Runtime validation
+
+Validate only checks config structure. It does not:
+- Check if URLs are accessible
+- Verify that selectors exist on the page
+- Validate that actions will succeed
+- Test step sequences
+
+Use `webreel preview` for runtime testing.
+
+### External files
+
+Validate does not verify that external references exist:
+- Include files specified in `include` arrays
+- Custom sound effect files in `sfx` config
+- Custom output directories
+
+These are checked at runtime during `record` or `preview`.
+
+<Tip>
+Run `webreel validate` after editing your config manually. It catches most errors instantly and provides clear, actionable error messages.
+</Tip>
+
+<Note>
+Validation is fast and safe. It only reads your config file and does not launch browsers, download binaries, or make network requests.
+</Note>
+
+## Related Commands
+
+- [`webreel preview`](/commands/preview) - Test your config with actual browser automation
+- [`webreel record`](/commands/record) - Record videos (validates config automatically before recording)
+- [`webreel init`](/commands/init) - Generate a valid config template

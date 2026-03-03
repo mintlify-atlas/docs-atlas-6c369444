@@ -1,0 +1,173 @@
+---
+title: Custom Theme
+description: Customize cursor and HUD appearance
+---
+
+The custom-theme example demonstrates how to fully customize the cursor overlay and keystroke HUD appearance using a code editor interface.
+
+## Configuration
+
+Here's the complete `webreel.config.json` for this example:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "theme": {
+    "cursor": {
+      "image": "./cursor.svg",
+      "size": 32,
+      "hotspot": "center"
+    },
+    "hud": {
+      "background": "rgba(30, 41, 59, 0.85)",
+      "color": "#e2e8f0",
+      "fontSize": 48,
+      "fontFamily": "\"SF Mono\", \"Fira Code\", monospace",
+      "borderRadius": 12,
+      "position": "top"
+    }
+  },
+  "videos": {
+    "custom-theme": {
+      "url": "./web/index.html",
+      "viewport": { "width": 1920, "height": 1080 },
+      "zoom": 2,
+      "waitFor": ".editor",
+      "defaultDelay": 400,
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "click", "text": "config.ts" },
+        { "action": "click", "text": "utils.ts", "delay": 800 },
+        { "action": "key", "key": "cmd+s", "delay": 1000 },
+        { "action": "pause", "ms": 1500 }
+      ]
+    }
+  }
+}
+```
+
+## What It Demonstrates
+
+### Global Theme Configuration
+
+The `theme` object at the root level applies to all videos:
+
+```json
+{
+  "theme": {
+    "cursor": { ... },
+    "hud": { ... }
+  },
+  "videos": { ... }
+}
+```
+
+You can also set `theme` on individual videos to override the global settings.
+
+### Custom Cursor Image
+
+Replace the default cursor with a custom SVG:
+
+```json
+"cursor": {
+  "image": "./cursor.svg",
+  "size": 32,
+  "hotspot": "center"
+}
+```
+
+- `image`: Path to a PNG or SVG cursor file (relative to the config)
+- `size`: Cursor size in pixels
+- `hotspot`: Click point alignment (`"top-left"`, `"center"`, or `{ "x": 16, "y": 16 }`)
+
+### Cursor Hotspot
+
+The `hotspot` determines which part of the cursor image represents the actual click point:
+
+- `"top-left"`: Default arrow cursor style
+- `"center"`: Touch/pointer cursors (as shown in this example)
+- `{ "x": 16, "y": 16 }`: Precise pixel coordinates
+
+### HUD Background and Color
+
+Customize the keystroke overlay appearance:
+
+```json
+"hud": {
+  "background": "rgba(30, 41, 59, 0.85)",
+  "color": "#e2e8f0"
+}
+```
+
+- `background`: CSS color value (supports rgba for transparency)
+- `color`: Text color (any CSS color format)
+
+This example uses a semi-transparent dark slate background with light gray text.
+
+### HUD Typography
+
+Control the font appearance:
+
+```json
+"fontSize": 48,
+"fontFamily": "\"SF Mono\", \"Fira Code\", monospace"
+```
+
+- `fontSize`: Size in pixels
+- `fontFamily`: CSS font stack (use monospace fonts for keyboard shortcuts)
+
+### HUD Border Radius
+
+Round the corners of the HUD overlay:
+
+```json
+"borderRadius": 12
+```
+
+This creates a softer, more modern appearance. Set to `0` for sharp corners.
+
+### HUD Position
+
+Place the HUD at the top or bottom of the screen:
+
+```json
+"position": "top"
+```
+
+- `"bottom"`: Default position
+- `"top"`: Useful when bottom content is important
+
+This example moves the HUD to the top to avoid obscuring a terminal at the bottom of the editor.
+
+### Video-Level Theme Overrides
+
+You can override theme settings per video:
+
+```json
+"videos": {
+  "custom-theme": {
+    "theme": {
+      "cursor": {
+        "hotspot": "center"
+      }
+    }
+  }
+}
+```
+
+This merges with the global theme, allowing fine-grained control.
+
+## Running the Example
+
+```bash
+cd examples/custom-theme
+webreel record
+```
+
+The output video will be saved to `videos/custom-theme.mp4`.
+
+## Next Steps
+
+- [Keyboard Shortcuts](/examples/keyboard-shortcuts) - See the HUD in action
+- [Mobile Viewport](/examples/mobile-viewport) - Customize for mobile devices
+- [Hello World](/examples/hello-world) - See the default theme

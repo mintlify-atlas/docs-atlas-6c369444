@@ -1,0 +1,330 @@
+---
+title: 'compose()'
+description: 'Composite cursor and HUD overlays onto recorded video'
+---
+
+The `compose()` function combines clean video with timeline-based cursor and HUD overlays to produce the final output with visual effects.
+
+## Function Signature
+
+```typescript
+await compose(
+  cleanVideoPath: string,
+  timelineData: TimelineData,
+  outputPath: string,
+  options?: ComposeOptions
+)
+```
+
+## Parameters
+
+<ParamField path="cleanVideoPath" type="string" required>
+  Path to the input video file without overlays
+</ParamField>
+
+<ParamField path="timelineData" type="TimelineData" required>
+  Timeline data containing cursor positions, HUD states, and theme configuration
+  
+  Get this from `timeline.toJSON()` or `recorder.getTimelineData()`
+</ParamField>
+
+<ParamField path="outputPath" type="string" required>
+  Path where the composed video will be saved (.mp4, .webm, or .gif)
+</ParamField>
+
+<ParamField path="options" type="ComposeOptions">
+  Composition options
+  
+  ```typescript
+  interface ComposeOptions {
+    sfx?: SfxConfig;
+    crf?: number;
+  }
+  ```
+</ParamField>
+
+### ComposeOptions
+
+<ParamField path="options.sfx" type="SfxConfig">
+  Sound effects configuration
+  
+  ```typescript
+  interface SfxConfig {
+    click?: 1 | 2 | 3 | 4 | string; // Built-in or custom sound
+    key?: 1 | 2 | 3 | 4 | string;
+  }
+  ```
+  
+  Built-in sounds:
+  - `1` - Default click/key sound
+  - `2` - Softer variant
+  - `3` - Mechanical variant
+  - `4` - Subtle variant
+  
+  Or provide a custom file path:
+  ```typescript
+  sfx: {
+    click: './sounds/custom-click.mp3',
+    key: './sounds/custom-key.mp3'
+  }
+  ```
+</ParamField>
+
+<ParamField path="options.crf" type="number" default="18">
+  Constant Rate Factor for video encoding quality
+  
+  - `0` - Lossless (very large files)
+  - `18` - Visually lossless (recommended)
+  - `23` - Default quality
+  - `28` - Lower quality
+  - `51` - Worst quality
+</ParamField>
+
+## How It Works
+
+The composition process:
+
+1. Reads the clean input video
+2. Renders cursor overlay for each frame based on timeline position
+3. Renders HUD overlay when keyboard shortcuts are shown
+4. Composites overlays onto video frames
+5. Applies sound effects at event timestamps
+6. Encodes final output in requested format
+
+## Usage Example
+
+### Basic Composition
+
+```typescript
+import { compose, InteractionTimeline } from '@webreel/core';
+
+// Load timeline from file
+const timelineData = JSON.parse(
+  await fs.readFile('./timeline.json', 'utf-8')
+);
+
+// Compose video with overlays
+await compose(
+  './clean-video.mp4',
+  timelineData,
+  './final-output.mp4'
+);
+```
+
+### With Sound Effects
+
+```typescript
+import { compose } from '@webreel/core';
+
+await compose(
+  './clean-video.mp4',
+  timelineData,
+  './output-with-audio.mp4',
+  {
+    sfx: {
+      click: 1,  // Use built-in click sound variant 1
+      key: 2     // Use built-in key sound variant 2
+    }
+  }
+);
+```
+
+### Custom Quality
+
+```typescript
+await compose(
+  './clean-video.mp4',
+  timelineData,
+  './high-quality.mp4',
+  {
+    crf: 15  // Higher quality than default
+  }
+);
+```
+
+### Complete Workflow
+
+```typescript
+import {
+  launchChrome,
+  connectCDP,
+  Recorder,
+  RecordingContext,
+  InteractionTimeline,
+  compose,
+  clickAt
+} from '@webreel/core';
+
+const chrome = await launchChrome();
+const client = await connectCDP(chrome.wsUrl);
+
+// Step 1: Record clean video with timeline
+const timeline = new InteractionTimeline(1920, 1080, {
+  fps: 60,
+  hud: {
+    background: 'rgba(0,0,0,0.8)',
+    fontSize: 56
+  }
+});
+
+const ctx = new RecordingContext();
+ctx.setMode('record');
+ctx.setTimeline(timeline);
+
+const recorder = new Recorder(1920, 1080, { fps: 60 });
+recorder.setTimeline(timeline);
+
+await recorder.start(client, './clean.mp4', ctx);
+
+// Perform interactions
+await navigate(client, 'https://example.com');
+await clickAt(ctx, client, 500, 300);
+
+await recorder.stop();
+
+// Step 2: Get timeline data
+const timelineData = timeline.toJSON();
+
+// Step 3: Compose final video
+await compose(
+  recorder.getTempVideoPath(), // or './clean.mp4'
+  timelineData,
+  './final-demo.mp4',
+  {
+    sfx: { click: 1, key: 2 },
+    crf: 18
+  }
+);
+
+await client.close();
+await chrome.process.kill();
+```
+
+## Output Formats
+
+Supported output formats based on file extension:
+
+### MP4 (recommended)
+
+```typescript
+await compose(cleanPath, timeline, './output.mp4', {
+  sfx: { click: 1, key: 1 }
+});
+```
+
+- H.264 video codec
+- AAC audio codec (when sfx provided)
+- Best compatibility
+- Optimized for web streaming
+
+### WebM
+
+```typescript
+await compose(cleanPath, timeline, './output.webm', {
+  sfx: { click: 1, key: 1 }
+});
+```
+
+- VP9 video codec
+- Opus audio codec (when sfx provided)
+- Good for web
+- Open format
+
+### GIF
+
+```typescript
+await compose(cleanPath, timeline, './output.gif');
+```
+
+- Animated GIF
+- No audio support
+- Larger file sizes
+- Universal compatibility
+
+## Performance Considerations
+
+### Caching
+
+The compositor caches:
+- Scaled cursor images for different scales
+- Rendered HUD overlays for each unique label combination
+- Overlay frames with matching cursor/HUD state
+
+This significantly speeds up processing for recordings with repetitive states.
+
+### Memory Usage
+
+For long recordings:
+- Frames are streamed to ffmpeg incrementally
+- Only active overlays are kept in memory
+- Clean video is read by ffmpeg, not loaded into memory
+
+## Error Handling
+
+```typescript
+import { compose } from '@webreel/core';
+
+try {
+  await compose(
+    './clean.mp4',
+    timelineData,
+    './output.mp4',
+    { sfx: { click: 1, key: 1 } }
+  );
+  console.log('Composition complete!');
+} catch (error) {
+  console.error('Composition failed:', error);
+  // Error includes ffmpeg stderr output for debugging
+}
+```
+
+## Timeline Data Structure
+
+The `TimelineData` structure passed to compose:
+
+```typescript
+interface TimelineData {
+  fps: number;
+  width: number;
+  height: number;
+  zoom: number;
+  theme: {
+    cursorSvg: string;
+    cursorSize: number;
+    cursorHotspot: 'top-left' | 'center';
+    hud: {
+      background: string;
+      color: string;
+      fontSize: number;
+      fontFamily: string;
+      borderRadius: number;
+      position: 'top' | 'bottom';
+    };
+  };
+  frames: Array<{
+    cursor: { x: number; y: number; scale: number };
+    hud: { labels: string[] } | null;
+  }>;
+  events: Array<{ type: 'click' | 'key'; timeMs: number }>;
+}
+```
+
+You can modify this data before compositing to:
+- Adjust cursor positions
+- Change HUD labels
+- Modify theme colors
+- Add or remove events
+- Change zoom level
+
+```typescript
+const data = timeline.toJSON();
+
+// Adjust zoom for larger cursor
+data.zoom = 1.5;
+
+// Change HUD position
+data.theme.hud.position = 'top';
+
+// Compose with modifications
+await compose('./clean.mp4', data, './output.mp4');
+```

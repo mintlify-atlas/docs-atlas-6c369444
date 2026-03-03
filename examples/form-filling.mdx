@@ -1,0 +1,122 @@
+---
+title: Form Filling
+description: Type into form fields with realistic typing speed
+---
+
+The form-filling example demonstrates how to simulate user input into form fields, including realistic typing delays and a login flow.
+
+## Configuration
+
+Here's the complete `webreel.config.json` for this example:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "form-filling": {
+      "url": "./web/index.html",
+      "viewport": { "width": 1920, "height": 1080 },
+      "zoom": 2,
+      "waitFor": "#email",
+      "defaultDelay": 300,
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        {
+          "action": "type",
+          "text": "user@example.com",
+          "selector": "#email",
+          "charDelay": 40
+        },
+        {
+          "action": "type",
+          "text": "supersecret123",
+          "selector": "#password",
+          "charDelay": 30,
+          "delay": 500
+        },
+        { "action": "click", "text": "Sign In" },
+        { "action": "pause", "ms": 2500 }
+      ]
+    }
+  }
+}
+```
+
+## What It Demonstrates
+
+### Type Action
+
+The `type` action simulates keyboard input with character-by-character typing:
+
+```json
+{
+  "action": "type",
+  "text": "user@example.com",
+  "selector": "#email",
+  "charDelay": 40
+}
+```
+
+- `text`: The content to type
+- `selector`: The input field to type into
+- `charDelay`: Milliseconds between each character (creates realistic typing speed)
+
+### Realistic Typing Speed
+
+Different `charDelay` values create varied typing speeds:
+
+- Email field: `40ms` per character (slower, more deliberate)
+- Password field: `30ms` per character (slightly faster)
+
+This variation makes the recording feel more human and natural.
+
+### Default Delay
+
+The `defaultDelay` field sets a default pause between all steps:
+
+```json
+"defaultDelay": 300
+```
+
+This prevents the recording from feeling too rushed. Individual steps can override this with their own `delay` field.
+
+### Step-Specific Delays
+
+The password field includes an extra delay before the next action:
+
+```json
+{
+  "action": "type",
+  "text": "supersecret123",
+  "selector": "#password",
+  "charDelay": 30,
+  "delay": 500
+}
+```
+
+This 500ms pause gives the viewer time to process what was typed before clicking the submit button.
+
+### Text-Based Click Targeting
+
+The submit button is clicked using text matching instead of a selector:
+
+```json
+{ "action": "click", "text": "Sign In" }
+```
+
+This is more resilient to UI changes than selector-based targeting.
+
+## Running the Example
+
+```bash
+cd examples/form-filling
+webreel record
+```
+
+The output video will be saved to `videos/form-filling.mp4`.
+
+## Next Steps
+
+- [Drag and Drop](/examples/drag-and-drop) - Learn about drag interactions
+- [Keyboard Shortcuts](/examples/keyboard-shortcuts) - Use keyboard commands
+- [Page Scrolling](/examples/page-scrolling) - Scroll the page and containers

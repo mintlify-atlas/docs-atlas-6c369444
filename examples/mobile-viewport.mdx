@@ -1,0 +1,139 @@
+---
+title: Mobile Viewport
+description: Record at mobile device dimensions
+---
+
+The mobile-viewport example demonstrates how to record at mobile device dimensions with touch-style interactions using a finance app interface.
+
+## Configuration
+
+Here's the complete `webreel.config.json` for this example:
+
+```json
+{
+  "$schema": "https://webreel.dev/schema/v1.json",
+  "videos": {
+    "mobile-viewport": {
+      "url": "./web/index.html",
+      "viewport": { "width": 390, "height": 844 },
+      "zoom": 2,
+      "waitFor": ".content",
+      "theme": {
+        "cursor": {
+          "hotspot": "center"
+        }
+      },
+      "defaultDelay": 600,
+      "steps": [
+        { "action": "pause", "ms": 500 },
+        { "action": "click", "selector": ".menu-btn" },
+        { "action": "pause", "ms": 1000 },
+        { "action": "click", "selector": "#menuOverlay" },
+        { "action": "scroll", "y": 300, "delay": 800 },
+        { "action": "pause", "ms": 500 }
+      ]
+    }
+  }
+}
+```
+
+## What It Demonstrates
+
+### Mobile Viewport Dimensions
+
+Set the viewport to mobile device dimensions:
+
+```json
+"viewport": { "width": 390, "height": 844 }
+```
+
+These dimensions match the iPhone 15 Pro. Common mobile viewport sizes:
+
+- iPhone 15 Pro: `390 x 844`
+- iPhone 15 Pro Max: `430 x 932`
+- Pixel 7: `412 x 915`
+- Galaxy S23: `360 x 780`
+
+### High-DPI Rendering
+
+The `zoom: 2` setting renders at 2x density for Retina displays:
+
+```json
+"zoom": 2
+```
+
+This creates crisp output on high-DPI screens. The final video dimensions will be:
+- Width: `390 × 2 = 780px`
+- Height: `844 × 2 = 1688px`
+
+### Touch Cursor Style
+
+The centered cursor hotspot creates a touch pointer appearance:
+
+```json
+"theme": {
+  "cursor": {
+    "hotspot": "center"
+  }
+}
+```
+
+This makes clicks feel more like finger taps than mouse clicks, appropriate for mobile interfaces.
+
+### Mobile Interactions
+
+The example demonstrates typical mobile UI patterns:
+
+1. **Hamburger Menu Tap**
+   ```json
+   { "action": "click", "selector": ".menu-btn" }
+   ```
+   Opens the navigation drawer.
+
+2. **Overlay Dismiss**
+   ```json
+   { "action": "click", "selector": "#menuOverlay" }
+   ```
+   Taps the overlay backdrop to close the menu.
+
+3. **Vertical Scroll**
+   ```json
+   { "action": "scroll", "y": 300 }
+   ```
+   Scrolls down to reveal more content.
+
+### Pauses for Mobile Animations
+
+Mobile UIs often have transition animations. The extended pauses give these time to complete:
+
+```json
+{ "action": "click", "selector": ".menu-btn" },
+{ "action": "pause", "ms": 1000 }
+```
+
+This 1000ms pause lets the menu slide-in animation finish before the next interaction.
+
+### Portrait Orientation
+
+The `390 x 844` viewport uses portrait orientation (height > width), matching how most users hold phones.
+
+For landscape recordings, swap the dimensions:
+
+```json
+"viewport": { "width": 844, "height": 390 }
+```
+
+## Running the Example
+
+```bash
+cd examples/mobile-viewport
+webreel record
+```
+
+The output video will be saved to `videos/mobile-viewport.mp4`.
+
+## Next Steps
+
+- [Custom Theme](/examples/custom-theme) - Further customize the cursor
+- [Page Scrolling](/examples/page-scrolling) - More scrolling examples
+- [Form Filling](/examples/form-filling) - Type into mobile forms
